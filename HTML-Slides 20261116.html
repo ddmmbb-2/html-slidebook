@@ -432,11 +432,28 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   .insert-buttons .button { padding-inline: 6px; }
   #addSymbol > span[aria-hidden] { display: none; }
 }
+
+#videoFields { margin: 0 0 9px; }
+.video-notice {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 70px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 7px 12px;
+  border-radius: 6px;
+  background: #1b1b19ef;
+  color: white;
+  font-size: 13px;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
 <header class="app-header">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name" data-ui="HTML 簡報">HTML 簡報</span><span class="app-version">v1.4.1</span></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name" data-ui="HTML 簡報">HTML 簡報</span><span class="app-version">v1.4.2</span></div>
   <div class="document-title">
     <label for="deckTitle" data-ui="簡報名稱">簡報名稱</label>
     <input id="deckTitle" maxlength="100" placeholder="未命名簡報" data-ui-placeholder="未命名簡報">
@@ -556,6 +573,14 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
           </div>
           <div id="mediaFields" hidden>
             <p class="media-name" id="mediaName"></p>
+            <div id="videoFields" hidden>
+              <label class="field-label" for="videoStart" data-ui="影片播放時機">影片播放時機</label>
+              <select id="videoStart">
+                <option value="manual" data-ui="手動按影片播放">手動按影片播放</option>
+                <option value="auto" data-ui="進入投影片時自動播放">進入投影片時自動播放</option>
+                <option value="next" data-ui="按下一頁時播放影片">按下一頁時播放影片</option>
+              </select>
+            </div>
             <button class="button small" id="replaceMedia" data-ui="更換檔案">更換檔案</button>
             <input id="replacementFile" type="file" accept="image/*,video/*,audio/*,.m4a,.ogg" hidden>
           </div>
@@ -605,12 +630,13 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   <div id="showStage" class="show-stage">
     <div id="showFrame" class="frame"><div id="showSurface" class="slide-surface"></div></div>
   </div>
+  <p id="videoNotice" class="video-notice" role="status" hidden></p>
   <div id="showBar" class="show-bar" aria-label="播放控制" data-ui-aria-label="播放控制" hidden>
     <button class="button" id="exitShow"><span class="ui-label" data-ui="退出">退出</span> <kbd>Esc</kbd></button>
     <div class="show-navigation">
       <button class="button icon" id="prevShow" aria-label="上一頁" data-ui-aria-label="上一頁">←</button>
       <span id="showPosition" aria-live="polite"></span>
-      <button class="button icon" id="nextShow" aria-label="下一頁" data-ui-aria-label="下一頁">→</button>
+      <button class="button icon" id="nextShow" aria-label="下一頁" data-ui-aria-label="下一頁" title="下一頁">→</button>
     </div>
     <button class="button" id="fullscreen" data-ui="全螢幕">全螢幕</button>
   </div>
@@ -864,6 +890,10 @@ function slideFromTemplate(template, t = (text) => text) {
   };
 }
 
+function videoStartMode(value) {
+  return value === "auto" || value === "next" ? value : "manual";
+}
+
 function mediaObject(assetId, kind, index, placement) {
   const offset = (index % 5) * 4;
   const audio = kind === "audio";
@@ -875,7 +905,7 @@ function mediaObject(assetId, kind, index, placement) {
 return {
   WIDTH, HEIGHT, heightFor, fontKey, FONT_FAMILIES, makeId, openDeck, referencedAssets, clamp, boxValue,
   MIN_SYMBOL_SIZE, MAX_SYMBOL_SIZE, resizeSymbol, symbolObject, setAspectRatio,
-  textObject, slideFromTemplate, mediaObject,
+  textObject, slideFromTemplate, mediaObject, videoStartMode,
 };
 })();
 
@@ -1369,7 +1399,10 @@ return function createSlideView({ dom, media, model, t }) {
     } else {
       node.controls = mode === "show";
       node.preload = "metadata";
-      if (kind === "video") node.playsInline = true;
+      if (kind === "video") {
+        node.playsInline = true;
+        if (mode === "show") node.dataset.videoStart = model.videoStartMode(object.videoStart);
+      }
     }
     node.addEventListener("error", fallback, { once: true });
     node.src = url;
@@ -1550,7 +1583,10 @@ return function createEditorView({ dom, document, store, slideView, window, mode
       value("fontColor", object.color);
       value("alignment", object.align);
     } else {
-      id("mediaName").textContent = store.deck.assets[object.asset]?.name ?? t("找不到檔案");
+      const asset = store.deck.assets[object.asset];
+      id("mediaName").textContent = asset?.name ?? t("找不到檔案");
+      id("videoFields").hidden = asset?.kind !== "video";
+      value("videoStart", model.videoStartMode(object.videoStart));
     }
     syncGeometry(object);
     id("layerBack").disabled = slide.objects[0] === object;
@@ -1951,6 +1987,10 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
   bindField("fontFamily", store.object, "font", model.fontKey);
   bindField("textBackground", store.object, "background");
   bindField("alignment", store.object, "align");
+  bindField("videoStart", () => {
+    const object = store.object();
+    return object?.type === "media" && store.deck.assets[object.asset]?.kind === "video" ? object : null;
+  }, "videoStart", model.videoStartMode);
   for (const [name, key] of Object.entries(view.geometry)) {
     bindField(name, store.object, key, asNumber((value, item) => item.symbol && (key === "w" || key === "h")
       ? undefined : model.boxValue(item, key, value)));
@@ -2198,6 +2238,9 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
   const { id, on } = dom;
   const show = id("show");
   const bar = id("showBar");
+  const surface = id("showSurface");
+  const videoNotice = id("videoNotice");
+  const started = new WeakSet();
   let index = 0;
   let controlTimer;
   const active = () => !show.hidden;
@@ -2224,14 +2267,51 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
     if (active()) slideView.fit(id("showStage"), id("showFrame"), id("showSurface"), 0, store.deck.aspectRatio);
   }
 
+  const videos = () => surface.querySelectorAll("video");
+  const pendingVideo = () => Array.from(videos()).find((video) =>
+    video.dataset.videoStart === "next" && !started.has(video));
+
+  function syncNextButton() {
+    const pending = Boolean(pendingVideo());
+    const next = id("nextShow");
+    next.disabled = !pending && index >= store.deck.slides.length - 1;
+    const label = t(pending ? "播放影片" : "下一頁");
+    next.setAttribute("aria-label", label);
+    next.title = label;
+    next.textContent = pending ? "▶" : "→";
+  }
+
+  function stopVideos() {
+    for (const video of videos()) video.pause();
+    videoNotice.hidden = true;
+  }
+
+  function playVideo(video) {
+    video.play().catch((error) => {
+      if (error.name === "AbortError" || !active() || !surface.contains(video)) return;
+      videoNotice.textContent = t("請按影片上的播放鍵開始播放。");
+      videoNotice.hidden = false;
+    });
+  }
+
   function draw() {
     const { slides, assets } = store.deck;
-    slideView.draw(id("showSurface"), slides[index], assets, "show", store.deck.aspectRatio);
+    stopVideos();
+    slideView.draw(surface, slides[index], assets, "show", store.deck.aspectRatio);
+    for (const video of videos()) {
+      video.addEventListener("play", () => {
+        started.add(video);
+        videoNotice.hidden = true;
+        syncNextButton();
+      }, { once: true });
+      video.addEventListener("error", syncNextButton, { once: true });
+      if (video.dataset.videoStart === "auto") playVideo(video);
+    }
     const position = id("showPosition");
     position.hidden = !store.deck.presentation.showPageNumber;
     position.textContent = (index + 1) + " / " + slides.length;
     id("prevShow").disabled = index <= 0;
-    id("nextShow").disabled = index >= slides.length - 1;
+    syncNextButton();
     fit();
   }
 
@@ -2250,7 +2330,8 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     hideControls();
     show.hidden = true;
-    id("showSurface").replaceChildren();
+    stopVideos();
+    surface.replaceChildren();
     id("workspace").inert = false;
     document.querySelector(".app-header").inert = false;
     id("play").focus();
@@ -2264,12 +2345,24 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
     showControls();
   }
 
+  function next() {
+    const video = pendingVideo();
+    if (!video) {
+      advance(index + 1);
+      return;
+    }
+    started.add(video);
+    playVideo(video);
+    syncNextButton();
+    showControls();
+  }
+
   on("show", "pointermove", revealAtBottom);
   on("show", "pointerdown", revealAtBottom);
   on("showBar", "focusin", showControls);
   on("play", "click", () => start(store.index()));
   on("prevShow", "click", () => advance(index - 1));
-  on("nextShow", "click", () => advance(index + 1));
+  on("nextShow", "click", next);
   on("exitShow", "click", stop);
   on("fullscreen", "click", async () => {
     try {
@@ -2294,10 +2387,14 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
     if (event.key === "Tab" && bar.hidden) showControls();
     if (event.target.closest("video, audio")) return;
     if (event.key === " " && event.target.closest("button")) return;
+    if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+      event.preventDefault();
+      if (!event.repeat) next();
+      return;
+    }
     const targets = {
-      ArrowRight: index + 1, ArrowLeft: index - 1,
-      PageDown: index + 1, PageUp: index - 1,
-      " ": index + 1, Home: 0, End: store.deck.slides.length - 1,
+      ArrowLeft: index - 1, PageUp: index - 1,
+      Home: 0, End: store.deck.slides.length - 1,
     };
     if (!Object.hasOwn(targets, event.key)) return;
     event.preventDefault();
@@ -3132,7 +3229,13 @@ const messages = {
     "實心星形": "Filled star",
     "空心星形": "Outline star",
     "加號": "Plus sign",
-    "減號": "Minus sign"
+    "減號": "Minus sign",
+    "影片播放時機": "Video start",
+    "手動按影片播放": "Use video controls",
+    "進入投影片時自動播放": "Automatically on slide entry",
+    "按下一頁時播放影片": "Play on Next",
+    "播放影片": "Play video",
+    "請按影片上的播放鍵開始播放。": "Press Play on the video to start it."
   },
   "ja": {
     "1. 準備": "1. 準備",
@@ -3340,7 +3443,13 @@ const messages = {
     "實心星形": "黒い星",
     "空心星形": "白い星",
     "加號": "プラス記号",
-    "減號": "マイナス記号"
+    "減號": "マイナス記号",
+    "影片播放時機": "動画の再生タイミング",
+    "手動按影片播放": "再生ボタンを押す",
+    "進入投影片時自動播放": "スライドを開くと自動再生",
+    "按下一頁時播放影片": "「次へ」で再生",
+    "播放影片": "動画を再生",
+    "請按影片上的播放鍵開始播放。": "動画の再生ボタンを押してください。"
   }
 };
 
