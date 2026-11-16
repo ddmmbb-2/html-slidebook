@@ -305,7 +305,7 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   .brand { gap: 4px; }
   .app-version { font-size: 10px; }
   .header-actions { gap: 4px; }
-  .header-actions .button span { display: none; }
+  .header-actions .button span[aria-hidden] { display: none; }
   .document-title { border: 0; padding-left: 0; }
   .header-actions .button { padding: 6px 8px; }
   .workspace { height: auto; grid-template-columns: 1fr; grid-template-areas: "compose" "slides" "inspector"; }
@@ -338,108 +338,236 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   border-radius: 3px;
   cursor: nwse-resize;
 }
+
+#language { width: auto; max-width: 9rem; }
+#aspectRatio { margin-bottom: 12px; }
+#transparentText { margin-top: 3px; }
+.color-row + .show-page-setting { margin-top: 6px; }
+.slide-surface[data-pattern="cover"] {
+  background-image: radial-gradient(circle at 87% 57%, #e4b681 0 13%, transparent 13.15%),
+    radial-gradient(circle at 87% 57%, transparent 0 23%, #e4b68165 23.1% 23.35%, transparent 23.45%),
+    radial-gradient(circle at 87% 57%, transparent 0 32%, #e4b68134 32.1% 32.3%, transparent 32.4%),
+    radial-gradient(circle at 87% 57%, transparent 0 41%, #e4b68125 41.1% 41.25%, transparent 41.4%);
+}
+.slide-surface[data-pattern="editorial"] {
+  background-image: linear-gradient(90deg, #a65b43 0 14%, #a65b4350 14% 100%);
+  background-position: 8.5% 32%;
+  background-size: 84% 2px;
+  background-repeat: no-repeat;
+}
+.slide-surface[data-pattern="section"] {
+  background-image: linear-gradient(120deg, transparent 0 67%, #ffffff1b 67% 80%, #ffffff30 80%);
+}
+.slide-surface[data-pattern="columns"], .slide-surface[data-pattern="steps"], .slide-surface[data-pattern="media"] {
+  background-repeat: no-repeat;
+}
+.slide-surface[data-pattern="columns"] {
+  background-image: linear-gradient(#fffdf8, #fffdf8), linear-gradient(#fffdf8, #fffdf8);
+  background-size: 41% 53%;
+  background-position: 12% 84%, 88% 84%;
+}
+.slide-surface[data-pattern="media"] {
+  background-image: linear-gradient(#d8e3df, #d8e3df);
+  background-size: 52% 57%;
+  background-position: 85.4% 79.1%;
+}
+.slide-surface[data-pattern="steps"] {
+  background-image: linear-gradient(#fffefbeb, #fffefbeb), linear-gradient(#fffefbeb, #fffefbeb), linear-gradient(#fffefbeb, #fffefbeb);
+  background-size: 26% 52%;
+  background-position: 9.45% 79.2%, 50% 79.2%, 90.55% 79.2%;
+}
+.slide-surface[data-pattern="quote"] {
+  background-image: linear-gradient(#c99963, #c99963), linear-gradient(#c99963, #c99963),
+    linear-gradient(#c9996366, #c9996366), linear-gradient(#c9996366, #c9996366);
+  background-size: 86% 2px, 86% 2px, 2px 80%, 2px 80%;
+  background-position: center 10%, center 90%, 7% center, 93% center;
+  background-repeat: no-repeat;
+}
+.template-media-preview {
+  border: 2px dashed #526e6570;
+  border-radius: 0;
+  background: transparent;
+  color: #38544b;
+  font-size: 36px;
+}
+@media (max-width: 690px) {
+  .app-header { flex-wrap: wrap; }
+  .document-title { min-width: 8rem; }
+  .header-actions { flex-wrap: wrap; margin-left: auto; }
+}
+#printPages { display: none; }
+@media print {
+  html, body { margin: 0; background: white; }
+  body:has(#printPages .print-page) > :not(#printPages) { display: none !important; }
+  #printPages { display: block; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .print-page { position: relative; break-inside: avoid; }
+  .print-page + .print-page { break-before: page; }
+  .print-page .slide-surface { inset: 0 auto auto 0; }
+}
+
+.symbol-glyph {
+  font-family: "Segoe UI Symbol", "Apple Symbols", "DejaVu Sans", "Noto Sans Symbols 2", sans-serif;
+  font-variant-emoji: text;
+  line-height: 1;
+}
+.slide-symbol { display: grid; place-items: center; }
+.slide-symbol .symbol-glyph { pointer-events: none; white-space: nowrap; }
+.symbol-group + .symbol-group { margin-top: 15px; }
+.symbol-group h3 { font-size: 13px; margin-bottom: 6px; }
+.symbol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(35px, 1fr)); gap: 6px; }
+.symbol-option { min-height: 40px; padding: 4px; font-size: 25px; }
+.symbol-inspector { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.symbol-inspector > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 39px;
+  height: 39px;
+  font-size: 24px;
+  background: var(--accent-light);
+  border-radius: 5px;
+}
+.symbol-inspector label { min-width: 0; color: var(--muted); font-size: 12px; }
+.geometry input[readonly] { background: var(--paper); color: var(--muted); }
+@media (max-width: 420px) {
+  .insert-buttons .button { padding-inline: 6px; }
+  #addSymbol > span[aria-hidden] { display: none; }
+}
 </style>
 </head>
 <body>
 <header class="app-header">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name">HTML 簡報</span><span class="app-version">v1.3.2</span></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name" data-ui="HTML 簡報">HTML 簡報</span><span class="app-version">v1.4.1</span></div>
   <div class="document-title">
-    <label for="deckTitle">簡報名稱</label>
-    <input id="deckTitle" maxlength="100" placeholder="未命名簡報">
+    <label for="deckTitle" data-ui="簡報名稱">簡報名稱</label>
+    <input id="deckTitle" maxlength="100" placeholder="未命名簡報" data-ui-placeholder="未命名簡報">
   </div>
   <div class="header-actions">
-    <button id="openDeck" class="button" title="開啟 HTML 簡報">開啟簡報</button>
+    <select id="language" aria-label="介面語言" data-ui-aria-label="介面語言" title="介面語言" data-ui-title="介面語言">
+      <option value="auto" data-ui="自動">自動</option>
+      <option value="zh-Hant" translate="no">繁體中文</option>
+      <option value="en" translate="no">English</option>
+      <option value="ja" translate="no">日本語</option>
+    </select>
+    <button id="openDeck" class="button" title="開啟 HTML 簡報" data-ui-title="開啟 HTML 簡報" data-ui="開啟簡報">開啟簡報</button>
     <input id="deckFile" type="file" accept=".html,.htm,text/html" hidden>
-    <button id="play" class="button" title="從目前頁播放（F5）"><span aria-hidden="true">▷</span> 播放</button>
-    <button id="save" class="button primary"><span aria-hidden="true">↓</span> 另存新檔</button>
+    <button id="play" class="button" title="從目前頁播放（F5）" data-ui-title="從目前頁播放（F5）"><span aria-hidden="true">▷</span> <span class="ui-label" data-ui="播放">播放</span></button>
+    <button id="save" class="button primary"><span aria-hidden="true">↓</span> <span class="ui-label" data-ui="另存新檔">另存新檔</span></button>
   </div>
 </header>
 <main class="workspace" id="workspace">
-  <aside class="slides-pane" aria-label="投影片列表">
-    <div class="pane-heading"><h2>投影片</h2><span id="pageCount" class="count"></span></div>
-    <button id="newSlide" class="button outline-add"><span aria-hidden="true">＋</span> 投影片範本</button>
+  <aside class="slides-pane" aria-label="投影片列表" data-ui-aria-label="投影片列表">
+    <div class="pane-heading"><h2 data-ui="投影片">投影片</h2><span id="pageCount" class="count"></span></div>
+    <button id="newSlide" class="button outline-add"><span aria-hidden="true">＋</span> <span class="ui-label" data-ui="投影片範本">投影片範本</span></button>
     <ol id="slideList" class="slide-list"></ol>
-    <div class="slide-actions" aria-label="投影片操作">
-      <button class="button icon" id="slideUp" title="上移投影片" aria-label="上移投影片">↑</button>
-      <button class="button icon" id="slideDown" title="下移投影片" aria-label="下移投影片">↓</button>
-      <button class="button small" id="duplicateSlide">複製</button>
-      <button class="button small" id="removeSlide">刪除</button>
+    <div class="slide-actions" aria-label="投影片操作" data-ui-aria-label="投影片操作">
+      <button class="button icon" id="slideUp" title="上移投影片" data-ui-title="上移投影片" aria-label="上移投影片" data-ui-aria-label="上移投影片">↑</button>
+      <button class="button icon" id="slideDown" title="下移投影片" data-ui-title="下移投影片" aria-label="下移投影片" data-ui-aria-label="下移投影片">↓</button>
+      <button class="button small" id="duplicateSlide" data-ui="複製">複製</button>
+      <button class="button small" id="removeSlide" data-ui="刪除">刪除</button>
     </div>
   </aside>
-  <section class="compose" aria-label="編輯畫布">
+  <section class="compose" aria-label="編輯畫布" data-ui-aria-label="編輯畫布">
     <div class="edit-bar">
       <div class="button-group">
-        <button class="button icon" id="undo" title="復原（Ctrl+Z）" aria-label="復原">↶</button>
-        <button class="button icon" id="redo" title="重做（Ctrl+Shift+Z）" aria-label="重做">↷</button>
+        <button class="button icon" id="undo" title="復原（Ctrl+Z）" data-ui-title="復原（Ctrl+Z）" aria-label="復原" data-ui-aria-label="復原">↶</button>
+        <button class="button icon" id="redo" title="重做（Ctrl+Shift+Z）" data-ui-title="重做（Ctrl+Shift+Z）" aria-label="重做" data-ui-aria-label="重做">↷</button>
       </div>
       <div class="button-group insert-buttons">
-        <button class="button" id="addText"><span class="text-icon" aria-hidden="true">T</span> 文字</button>
-        <button class="button" id="addMedia"><span aria-hidden="true">▧</span> 圖片／影音</button>
+        <button class="button" id="addText"><span class="text-icon" aria-hidden="true">T</span> <span class="ui-label" data-ui="文字">文字</span></button>
+        <button class="button" id="addSymbol"><span aria-hidden="true">✧</span> <span class="ui-label" data-ui="符號">符號</span></button>
+        <button class="button" id="addMedia"><span aria-hidden="true">▧</span> <span class="ui-label" data-ui="圖片／影音">圖片／影音</span></button>
         <input id="mediaFiles" type="file" accept="image/*,video/*,audio/*,.m4a,.ogg" multiple hidden>
       </div>
     </div>
     <div id="importMediaNotice" class="import-media-notice" hidden>
       <span id="importMediaMessage" role="status"></span>
-      <button id="chooseImportedFolder" class="button small">選取舊簡報資料夾</button>
+      <button id="chooseImportedFolder" class="button small" data-ui="選取舊簡報資料夾">選取舊簡報資料夾</button>
       <input id="importedFolder" type="file" webkitdirectory multiple hidden>
     </div>
     <div class="stage" id="stage">
-      <div class="frame" id="frame"><div class="slide-surface" id="editorSurface" aria-label="目前投影片"></div></div>
+      <div class="frame" id="frame"><div class="slide-surface" id="editorSurface" aria-label="目前投影片" data-ui-aria-label="目前投影片"></div></div>
     </div>
-    <footer class="stage-status"><span id="slidePosition"></span><span id="editStatus">雙擊文字可直接編輯</span><span>16:9</span></footer>
+    <footer class="stage-status"><span id="slidePosition"></span><span id="editStatus" data-ui="雙擊文字可直接編輯">雙擊文字可直接編輯</span><span id="stageRatio">16:9</span></footer>
   </section>
-  <aside class="inspector" aria-label="投影片與物件設定">
-    <div class="pane-heading"><h2>設定</h2></div>
+  <aside class="inspector" aria-label="投影片與物件設定" data-ui-aria-label="投影片與物件設定">
+    <div class="pane-heading"><h2 data-ui="設定">設定</h2></div>
     <div class="inspector-body">
       <section class="inspector-section presentation-section">
-        <div class="section-heading"><h3>頁碼顯示</h3></div>
-        <label class="show-page-setting"><input type="checkbox" id="showPageNumber" checked> 播放時顯示頁碼</label>
-        <label class="show-page-setting"><input type="checkbox" id="showEditorPageNumber" checked> 編輯時顯示頁碼</label>
+        <div class="section-heading"><h3 data-ui="簡報設定">簡報設定</h3></div>
+        <label class="field-label" for="aspectRatio" data-ui="投影片比例">投影片比例</label>
+        <select id="aspectRatio"><option value="16:9">16:9</option><option value="4:3">4:3</option></select>
+        <label class="show-page-setting"><input type="checkbox" id="showPageNumber" checked> <span class="ui-label" data-ui="播放時顯示頁碼">播放時顯示頁碼</span></label>
+        <label class="show-page-setting"><input type="checkbox" id="showEditorPageNumber" checked> <span class="ui-label" data-ui="編輯時顯示頁碼">編輯時顯示頁碼</span></label>
       </section>
       <section class="inspector-section">
-        <div class="section-heading"><h3>投影片</h3></div>
-        <label class="field-label" for="slideName">投影片名稱</label>
+        <div class="section-heading"><h3 data-ui="投影片">投影片</h3></div>
+        <label class="field-label" for="slideName" data-ui="投影片名稱">投影片名稱</label>
         <input id="slideName" maxlength="100">
         <div class="color-row">
-          <label for="slideColor">背景色</label>
+          <label for="slideColor" data-ui="背景色">背景色</label>
           <input type="color" id="slideColor">
         </div>
-        <label class="field-label" for="slidePattern">背景圖樣</label>
+        <label class="field-label" for="slidePattern" data-ui="背景圖樣">背景圖樣</label>
         <select id="slidePattern">
-          <option value="plain">純色</option>
-          <option value="grid">方格</option>
-          <option value="dots">圓點</option>
+          <option value="plain" data-ui="純色">純色</option>
+          <option value="grid" data-ui="方格">方格</option>
+          <option value="dots" data-ui="圓點">圓點</option>
+          <option value="cover" data-ui="幾何弧線">幾何弧線</option>
+          <option value="editorial" data-ui="細線頁首">細線頁首</option>
+          <option value="section" data-ui="斜面分色">斜面分色</option>
+          <option value="columns" data-ui="雙欄底板">雙欄底板</option>
+          <option value="media" data-ui="圖文分割">圖文分割</option>
+          <option value="steps" data-ui="三欄底板">三欄底板</option>
+          <option value="quote" data-ui="留白邊框">留白邊框</option>
         </select>
       </section>
       <section class="inspector-section object-section">
-        <div class="section-heading"><h3>物件</h3><button id="removeObject" class="quiet-button" hidden>刪除</button></div>
-        <p id="objectHint" class="hint">點選投影片上的文字、圖片或影音，即可調整內容與位置。</p>
+        <div class="section-heading"><h3 data-ui="物件">物件</h3><button id="removeObject" class="quiet-button" hidden data-ui="刪除">刪除</button></div>
+        <p id="objectHint" class="hint" data-ui="點選投影片上的物件，即可調整內容與位置。">點選投影片上的物件，即可調整內容與位置。</p>
         <div id="objectFields" hidden>
+          <div id="symbolFields" hidden>
+            <div class="symbol-inspector">
+              <span id="selectedSymbol" class="symbol-glyph" aria-hidden="true"></span>
+              <label><span class="ui-label" data-ui="符號大小">符號大小</span><input id="symbolSize" type="number" step="1"></label>
+            </div>
+            <p class="hint" data-ui="拖曳右下角可等比例縮放。">拖曳右下角可等比例縮放。</p>
+          </div>
           <div id="textFields">
-            <label class="field-label" for="objectText">文字內容</label>
+            <label class="field-label" for="objectText" data-ui="文字內容">文字內容</label>
             <textarea id="objectText" rows="3"></textarea>
             <div class="field-grid">
-              <label>字級<input id="fontSize" type="number" min="8" max="180" step="1"></label>
-              <label>字重<select id="fontWeight"><option value="400">一般</option><option value="700">粗體</option><option value="900">特粗</option></select></label>
+              <label><span class="ui-label" data-ui="字級">字級</span><input id="fontSize" type="number" min="8" max="180" step="1"></label>
+              <label><span class="ui-label" data-ui="字重">字重</span><select id="fontWeight"><option value="400" data-ui="一般">一般</option><option value="700" data-ui="粗體">粗體</option><option value="900" data-ui="特粗">特粗</option></select></label>
             </div>
-            <div class="color-row"><label for="fontColor">文字顏色</label><input type="color" id="fontColor"></div>
-            <label class="field-label" for="alignment">對齊</label>
-            <select id="alignment"><option value="left">靠左</option><option value="center">置中</option><option value="right">靠右</option></select>
+            <label class="field-label" for="fontFamily" data-ui="字體">字體</label>
+            <select id="fontFamily">
+              <option value="default" data-ui="預設字體">預設字體</option>
+              <option value="sans" data-ui="無襯線 · Arial／黑體">無襯線 · Arial／黑體</option>
+              <option value="serif" data-ui="襯線 · Times New Roman／明體">襯線 · Times New Roman／明體</option>
+              <option value="mono" data-ui="等寬 · Courier New／等寬">等寬 · Courier New／等寬</option>
+            </select>
+            <label class="field-label" for="alignment" data-ui="對齊">對齊</label>
+            <select id="alignment"><option value="left" data-ui="靠左">靠左</option><option value="center" data-ui="置中">置中</option><option value="right" data-ui="靠右">靠右</option></select>
+          </div>
+          <div id="textStyleFields" hidden>
+            <div class="color-row"><label for="textBackground" data-ui="文字框背景色">文字框背景色</label><input type="color" id="textBackground"></div>
+            <label class="show-page-setting"><input type="checkbox" id="transparentText" checked> <span class="ui-label" data-ui="透明背景">透明背景</span></label>
+            <div class="color-row"><label for="fontColor" data-ui="文字顏色">文字顏色</label><input type="color" id="fontColor"></div>
           </div>
           <div id="mediaFields" hidden>
             <p class="media-name" id="mediaName"></p>
-            <button class="button small" id="replaceMedia">更換檔案</button>
+            <button class="button small" id="replaceMedia" data-ui="更換檔案">更換檔案</button>
             <input id="replacementFile" type="file" accept="image/*,video/*,audio/*,.m4a,.ogg" hidden>
           </div>
           <div class="field-grid geometry">
-            <label>水平位置 %<input id="objX" type="number" min="0" max="99" step="0.1"></label>
-            <label>垂直位置 %<input id="objY" type="number" min="0" max="99" step="0.1"></label>
-            <label>寬度 %<input id="objW" type="number" min="1" max="100" step="0.1"></label>
-            <label>高度 %<input id="objH" type="number" min="1" max="100" step="0.1"></label>
+            <label><span class="ui-label" data-ui="水平位置 %">水平位置 %</span><input id="objX" type="number" min="0" max="99" step="0.1"></label>
+            <label><span class="ui-label" data-ui="垂直位置 %">垂直位置 %</span><input id="objY" type="number" min="0" max="99" step="0.1"></label>
+            <label><span class="ui-label" data-ui="寬度 %">寬度 %</span><input id="objW" type="number" min="1" max="100" step="0.1"></label>
+            <label><span class="ui-label" data-ui="高度 %">高度 %</span><input id="objH" type="number" min="1" max="100" step="0.1"></label>
           </div>
           <div class="layer-actions">
-            <button class="button small" id="layerBack">移到底層</button>
-            <button class="button small" id="layerFront">移到頂層</button>
+            <button class="button small" id="layerBack" data-ui="移到底層">移到底層</button>
+            <button class="button small" id="layerFront" data-ui="移到頂層">移到頂層</button>
           </div>
         </div>
       </section>
@@ -447,40 +575,47 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   </aside>
 </main>
 <dialog id="addDialog">
-  <form method="dialog" class="dialog-head"><h2>選擇投影片範本</h2><button class="button icon" aria-label="關閉">×</button></form>
+  <form method="dialog" class="dialog-head"><h2 data-ui="選擇投影片範本">選擇投影片範本</h2><button class="button icon" aria-label="關閉" data-ui-aria-label="關閉">×</button></form>
   <div id="templateOptions" class="layout-options"></div>
 </dialog>
+<dialog id="symbolDialog">
+  <form method="dialog" class="dialog-head"><h2 data-ui="插入符號">插入符號</h2><button class="button icon" aria-label="關閉" data-ui-aria-label="關閉">×</button></form>
+  <div id="symbolOptions"></div>
+</dialog>
 <dialog id="saveDialog">
-  <form method="dialog" class="dialog-head"><h2>另存新檔</h2><button class="button icon" aria-label="關閉">×</button></form>
-  <label class="field-label" for="saveName">檔案名稱</label>
-  <input id="saveName" maxlength="100" placeholder="我的簡報">
+  <form method="dialog" class="dialog-head"><h2 data-ui="另存新檔">另存新檔</h2><button class="button icon" aria-label="關閉" data-ui-aria-label="關閉">×</button></form>
+  <label class="field-label" for="saveName" data-ui="檔案名稱">檔案名稱</label>
+  <input id="saveName" maxlength="100" placeholder="我的簡報" data-ui-placeholder="我的簡報">
   <p class="hint" id="saveSummary"></p>
   <div id="sourceTools" class="source-tools" hidden>
-    <button class="button small" id="pickFolder">選取原簡報的資料夾</button>
+    <button class="button small" id="pickFolder" data-ui="選取原簡報的資料夾">選取原簡報的資料夾</button>
     <input id="sourceFolder" type="file" webkitdirectory multiple hidden>
     <p class="hint" id="sourceSummary"></p>
   </div>
   <div class="save-options">
-    <button class="button primary" id="savePackage">下載 HTML＋影音 ZIP</button>
-    <button class="button" id="saveStandalone">下載單一 HTML</button>
-    <button class="button" id="saveLinked">只下載 HTML（沿用原影音）</button>
+    <button class="button primary" id="savePackage" data-ui="下載 HTML＋影音 ZIP">下載 HTML＋影音 ZIP</button>
+    <button class="button" id="saveStandalone" data-ui="下載單一 HTML">下載單一 HTML</button>
+    <button class="button" id="saveLinked" data-ui="只下載 HTML（沿用原影音）">只下載 HTML（沿用原影音）</button>
+    <button class="button" id="savePDF" data-ui="匯出 PDF">匯出 PDF</button>
+    <p class="hint" data-ui="在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。">在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。</p>
   </div>
   <p class="save-message" id="saveMessage" role="status"></p>
 </dialog>
-<section id="show" class="show" aria-label="播放模式" tabindex="-1" hidden>
+<section id="show" class="show" aria-label="播放模式" data-ui-aria-label="播放模式" tabindex="-1" hidden>
   <div id="showStage" class="show-stage">
     <div id="showFrame" class="frame"><div id="showSurface" class="slide-surface"></div></div>
   </div>
-  <div id="showBar" class="show-bar" aria-label="播放控制" hidden>
-    <button class="button" id="exitShow">退出 <kbd>Esc</kbd></button>
+  <div id="showBar" class="show-bar" aria-label="播放控制" data-ui-aria-label="播放控制" hidden>
+    <button class="button" id="exitShow"><span class="ui-label" data-ui="退出">退出</span> <kbd>Esc</kbd></button>
     <div class="show-navigation">
-      <button class="button icon" id="prevShow" aria-label="上一頁">←</button>
+      <button class="button icon" id="prevShow" aria-label="上一頁" data-ui-aria-label="上一頁">←</button>
       <span id="showPosition" aria-live="polite"></span>
-      <button class="button icon" id="nextShow" aria-label="下一頁">→</button>
+      <button class="button icon" id="nextShow" aria-label="下一頁" data-ui-aria-label="下一頁">→</button>
     </div>
-    <button class="button" id="fullscreen">全螢幕</button>
+    <button class="button" id="fullscreen" data-ui="全螢幕">全螢幕</button>
   </div>
 </section>
+<div id="printPages" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <script id="deckData" type="application/json">
 {
@@ -600,7 +735,24 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
 const model = (() => {
 const WIDTH = 1280;
 const HEIGHT = 720;
+const FONT_FAMILIES = Object.freeze({
+  default: '"Geist", "Inter", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif',
+  sans: 'Arial, Helvetica, "Microsoft JhengHei", "PingFang TC", "Noto Sans CJK TC", sans-serif',
+  serif: '"Times New Roman", "Songti TC", PMingLiU, "Noto Serif CJK TC", serif',
+  mono: '"Courier New", Courier, "Microsoft JhengHei", "PingFang TC", "Noto Sans Mono CJK TC", monospace',
+});
+
+function heightFor(ratio) {
+  return ratio === "4:3" ? 960 : HEIGHT;
+}
+
+function fontKey(key) {
+  return Object.hasOwn(FONT_FAMILIES, key) ? key : "default";
+}
 const FORMAT_VERSION = 1;
+const MIN_SYMBOL_SIZE = 16;
+const MAX_SYMBOL_SIZE = 600;
+const SYMBOL_BOX_SCALE = 1.25;
 
 function makeId() {
   return Array.from(crypto.getRandomValues(new Uint8Array(12)), (byte) =>
@@ -621,6 +773,7 @@ function openDeck(saved) {
   const deck = {
     version: FORMAT_VERSION,
     title: saved.title,
+    aspectRatio: saved.aspectRatio === "4:3" ? "4:3" : "16:9",
     slides: saved.slides,
     assets,
     presentation: {
@@ -655,16 +808,58 @@ function textObject(text, box, size, color = "#25322d", weight = 400) {
   return { id: makeId(), type: "text", x, y, w, h, text, size, color, weight, align: "left" };
 }
 
-function slideFromTemplate(template) {
+function symbolBox(size, ratio) {
+  return {
+    w: size * SYMBOL_BOX_SCALE * 100 / WIDTH,
+    h: size * SYMBOL_BOX_SCALE * 100 / heightFor(ratio),
+  };
+}
+
+function resizeSymbol(object, size, ratio) {
+  const available = Math.min((100 - object.x) * WIDTH, (100 - object.y) * heightFor(ratio)) / 100;
+  const maxSize = Math.min(MAX_SYMBOL_SIZE, Math.floor(available / SYMBOL_BOX_SCALE + 1e-7));
+  const nextSize = clamp(Math.round(size), MIN_SYMBOL_SIZE, maxSize);
+  return { size: nextSize, ...symbolBox(nextSize, ratio) };
+}
+
+function symbolObject(glyph, ratio, background) {
+  const size = 114;
+  const { w, h } = symbolBox(size, ratio);
+  const channels = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(background);
+  const [red, green, blue] = channels ? channels.slice(1).map((channel) => parseInt(channel, 16)) : [255, 255, 255];
+  const brightness = 0.299 * red + 0.587 * green + 0.114 * blue;
+  const color = brightness < 145 ? "#ffffff" : "#25322d";
+  return {
+    ...textObject(glyph, [50 - w / 2, 50 - h / 2, w, h], size, color),
+    symbol: true,
+    align: "center",
+  };
+}
+
+function setAspectRatio(deck, ratio) {
+  deck.aspectRatio = ratio;
+  for (const slide of deck.slides) {
+    for (const object of slide.objects) {
+      if (!object.symbol || object.type !== "text") continue;
+      Object.assign(object, symbolBox(object.size, ratio));
+      object.x = boxValue(object, "x", object.x);
+      object.y = boxValue(object, "y", object.y);
+    }
+  }
+}
+
+function slideFromTemplate(template, t = (text) => text) {
   return {
     id: makeId(),
-    name: template.name ?? template.label,
+    name: t(template.name ?? template.label),
     color: template.color,
     pattern: template.pattern ?? "plain",
     ...(template.mediaBox ? { mediaBox: [...template.mediaBox] } : {}),
     objects: template.text.map((item) => ({
-      ...textObject(item.text, item.box, item.size, item.color, item.weight),
+      ...textObject(t(item.text), item.box, item.size, item.color, item.weight),
       align: item.align ?? "left",
+      ...(item.font ? { font: item.font } : {}),
+      ...(item.background ? { background: item.background } : {}),
     })),
   };
 }
@@ -678,7 +873,8 @@ function mediaObject(assetId, kind, index, placement) {
 }
 
 return {
-  WIDTH, HEIGHT, makeId, openDeck, referencedAssets, clamp, boxValue,
+  WIDTH, HEIGHT, heightFor, fontKey, FONT_FAMILIES, makeId, openDeck, referencedAssets, clamp, boxValue,
+  MIN_SYMBOL_SIZE, MAX_SYMBOL_SIZE, resizeSymbol, symbolObject, setAspectRatio,
   textObject, slideFromTemplate, mediaObject,
 };
 })();
@@ -700,6 +896,51 @@ return function createDOM(document) {
   }
 
   return { id, make, value, on: (name, event, handler) => id(name).addEventListener(event, handler) };
+}
+})();
+
+// i18n.mjs
+const createI18n = (() => {
+const PREFERENCE_KEY = "html-slides.language";
+const ATTRIBUTES = ["title", "aria-label", "placeholder"];
+
+return function createI18n({ window, document, messages, select }) {
+  let preference = "auto";
+  try { preference = window.localStorage?.getItem(PREFERENCE_KEY) ?? "auto"; } catch {}
+  let language;
+  const t = (source, fields = {}) => {
+    const message = messages[language]?.[source] ?? source;
+    return message.replace(/\{(\w+)\}/g, (token, key) =>
+      Object.hasOwn(fields, key) ? String(fields[key]) : token);
+  };
+
+  function apply() {
+    const locale = window.navigator?.languages?.[0] || window.navigator?.language || "zh-Hant";
+    language = preference === "auto"
+      ? (locale.startsWith("zh") ? "zh-Hant" : locale.startsWith("ja") ? "ja" : "en")
+      : preference;
+    document.documentElement.lang = language;
+    select.value = preference;
+    for (const element of document.querySelectorAll?.("[data-ui]") ?? []) {
+      element.textContent = t(element.dataset.ui);
+    }
+    for (const attribute of ATTRIBUTES) {
+      for (const element of document.querySelectorAll?.("[data-ui-" + attribute + "]") ?? []) {
+        element.setAttribute(attribute, t(element.getAttribute("data-ui-" + attribute)));
+      }
+    }
+  }
+
+  if (!["auto", "zh-Hant", "en", "ja"].includes(preference)) preference = "auto";
+  apply();
+  return {
+    t,
+    change(value) {
+      preference = value;
+      try { window.localStorage?.setItem(PREFERENCE_KEY, value); } catch {}
+      apply();
+    },
+  };
 }
 })();
 
@@ -1016,11 +1257,11 @@ return async function makeZip(files, utf8) {
 
 // export.mjs
 const createExporter = (() => {
-function readDataURL(file) {
+function readDataURL(file, t) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("無法讀取影音檔案。"));
+    reader.onerror = () => reject(new Error(t("無法讀取影音檔案。")));
     reader.readAsDataURL(file);
   });
 }
@@ -1032,7 +1273,7 @@ function embeddedBlob(data) {
   return new Blob([bytes], { type: data.slice(5, separator).split(";")[0] });
 }
 
-return function createExporter({ model, media, filenames, serialize, makeZip }) {
+return function createExporter({ model, media, filenames, serialize, makeZip, t = (text) => text }) {
   function inspect(deck) {
     const refs = model.referencedAssets(deck);
     let unavailable = 0;
@@ -1045,23 +1286,23 @@ return function createExporter({ model, media, filenames, serialize, makeZip }) 
   }
 
   async function create(deck, mode, requestedName) {
-    const filename = filenames.clean(requestedName.replace(/\.(html?|zip)$/i, ""), "未命名簡報");
+    const filename = filenames.clean(requestedName.replace(/\.(html?|zip)$/i, ""), t("未命名簡報"));
     const savedDeck = { ...deck, assets: {} };
     const files = [];
     for (const [id, asset] of model.referencedAssets(deck)) {
-      if (!asset) throw new Error("簡報引用了一個不存在的影音檔案。");
+      if (!asset) throw new Error(t("簡報引用了一個不存在的影音檔案。"));
       const metadata = { ...asset };
       const original = media.embeddedData(id);
       const file = media.fileFor(id, asset);
       if (mode === "standalone") {
-        if (!original && !file) throw new Error("找不到影音檔案 " + asset.name);
-        metadata.data = original ?? await readDataURL(file);
+        if (!original && !file) throw new Error(t("找不到影音檔案 {name}", { name: asset.name }));
+        metadata.data = original ?? await readDataURL(file, t);
       } else if (mode === "package") {
         const bytes = file ?? (original ? embeddedBlob(original) : null);
-        if (!bytes || !filenames.relativeURL(asset.path)) throw new Error("找不到影音檔案 " + asset.name);
+        if (!bytes || !filenames.relativeURL(asset.path)) throw new Error(t("找不到影音檔案 {name}", { name: asset.name }));
         files.push([asset.path, bytes]);
       } else if (media.origin(id) !== "relative") {
-        throw new Error("請使用 ZIP 或單一 HTML 保留新增的影音。");
+        throw new Error(t("請使用 ZIP 或單一 HTML 保留新增的影音。"));
       }
       savedDeck.assets[id] = metadata;
     }
@@ -1079,14 +1320,14 @@ return function createExporter({ model, media, filenames, serialize, makeZip }) 
 
 // slide-view.mjs
 const createSlideView = (() => {
-return function createSlideView({ dom, media, model }) {
-  const { WIDTH, HEIGHT } = model;
+return function createSlideView({ dom, media, model, t }) {
+  const { WIDTH, heightFor } = model;
 
   function applyBox(element, object) {
-    element.style.left = object.x * WIDTH / 100 + "px";
-    element.style.top = object.y * HEIGHT / 100 + "px";
-    element.style.width = object.w * WIDTH / 100 + "px";
-    element.style.height = object.h * HEIGHT / 100 + "px";
+    element.style.left = object.x + "%";
+    element.style.top = object.y + "%";
+    element.style.width = object.w + "%";
+    element.style.height = object.h + "%";
   }
 
   function applyText(element, object) {
@@ -1094,22 +1335,25 @@ return function createSlideView({ dom, media, model }) {
     element.style.fontWeight = object.weight;
     element.style.textAlign = object.align;
     element.style.color = object.color;
+    element.style.fontFamily = model.FONT_FAMILIES[model.fontKey(object.font)];
+    element.style.backgroundColor = /^#[0-9a-f]{6}$/i.test(object.background ?? "") ? object.background : "transparent";
   }
 
   function displayMedia(element, object, mode, assets) {
     const asset = assets[object.asset];
-    const label = asset?.name ?? "找不到檔案";
+    const label = asset?.name ?? t("找不到檔案");
     const kind = asset?.kind;
-    if (mode === "mini" && kind !== "image") {
+    if ((mode === "mini" || mode === "print") && kind !== "image") {
       const badge = dom.make("div", "mini-media");
-      badge.textContent = media.labels[kind] ?? "影音";
+      const kindLabel = t(media.labels[kind] ?? "影音");
+      badge.textContent = mode === "print" ? kindLabel + " · " + label : kindLabel;
       element.append(badge);
       return;
     }
 
     function fallback() {
       const badge = dom.make("div", "media-fallback");
-      badge.textContent = "無法開啟 " + label;
+      badge.textContent = t("無法開啟 {name}", { name: label });
       element.replaceChildren(badge);
     }
 
@@ -1132,7 +1376,7 @@ return function createSlideView({ dom, media, model }) {
     element.append(node);
     if (mode === "edit" && kind === "audio") {
       const badge = dom.make("div", "media-fallback");
-      badge.textContent = "音訊 · " + label;
+      badge.textContent = t("音訊") + " · " + label;
       element.append(badge);
     }
   }
@@ -1147,16 +1391,25 @@ return function createSlideView({ dom, media, model }) {
     }
   }
 
-  function draw(surface, slide, assets, mode, objectId = null) {
+  function draw(surface, slide, assets, mode, ratio, objectId = null) {
+    surface.style.height = heightFor(ratio) + "px";
     surface.classList.toggle("editing", mode === "edit");
     surface.dataset.pattern = slide.pattern;
     surface.style.backgroundColor = slide.color;
     const elements = slide.objects.map((object) => {
-      const element = dom.make("div", "slide-object " + (object.type === "text" ? "slide-text" : "slide-media"));
+      const isText = object.type === "text";
+      const style = isText ? (object.symbol ? "slide-symbol" : "slide-text") : "slide-media";
+      const element = dom.make("div", "slide-object " + style);
       applyBox(element, object);
-      if (object.type === "text") {
+      if (isText) {
         applyText(element, object);
-        element.textContent = object.text;
+        if (object.symbol) {
+          const glyph = dom.make("span", "symbol-glyph");
+          glyph.textContent = object.text;
+          element.append(glyph);
+        } else {
+          element.textContent = object.text;
+        }
       } else {
         displayMedia(element, object, mode, assets);
       }
@@ -1171,9 +1424,11 @@ return function createSlideView({ dom, media, model }) {
     surface.style.transform = "scale(" + width / WIDTH + ")";
   }
 
-  function fit(stage, frame, surface, padding) {
-    const width = Math.max(0, Math.min(stage.clientWidth - padding, (stage.clientHeight - padding) * WIDTH / HEIGHT));
+  function fit(stage, frame, surface, padding, ratio) {
+    const height = heightFor(ratio);
+    const width = Math.max(0, Math.min(stage.clientWidth - padding, (stage.clientHeight - padding) * WIDTH / height));
     frame.style.width = width + "px";
+    frame.style.aspectRatio = ratio.replace(":", " / ");
     scale(surface, width);
   }
 
@@ -1185,18 +1440,18 @@ return function createSlideView({ dom, media, model }) {
 const createEditorView = (() => {
 const geometry = { objX: "x", objY: "y", objW: "w", objH: "h" };
 
-return function createEditorView({ dom, document, store, slideView, window }) {
+return function createEditorView({ dom, document, store, slideView, window, model, t }) {
   const { id, make, value } = dom;
 
   function fit() {
-    slideView.fit(id("stage"), id("frame"), id("editorSurface"), window.innerWidth < 691 ? 20 : 46);
+    slideView.fit(id("stage"), id("frame"), id("editorSurface"), window.innerWidth < 691 ? 20 : 46, store.deck.aspectRatio);
     for (const mini of id("slideList").querySelectorAll(".mini-frame")) {
       slideView.scale(mini.firstElementChild, mini.clientWidth);
     }
   }
 
   function drawEditor() {
-    slideView.draw(id("editorSurface"), store.slide(), store.deck.assets, "edit", store.objectId);
+    slideView.draw(id("editorSurface"), store.slide(), store.deck.assets, "edit", store.deck.aspectRatio, store.objectId);
   }
 
   function renderList() {
@@ -1208,15 +1463,16 @@ return function createEditorView({ dom, document, store, slideView, window }) {
       button.dataset.slide = slide.id;
       button.setAttribute("aria-current", String(slide.id === store.slideId));
       const mini = make("div", "mini-frame");
+      mini.style.aspectRatio = store.deck.aspectRatio.replace(":", " / ");
       mini.setAttribute("aria-hidden", "true");
       const surface = make("div", "slide-surface");
-      slideView.draw(surface, slide, store.deck.assets, "mini");
+      slideView.draw(surface, slide, store.deck.assets, "mini", store.deck.aspectRatio);
       mini.append(surface);
       const caption = make("span", "slide-caption");
       const counter = make("span", "slide-index");
       counter.textContent = String(index + 1).padStart(2, "0");
       const name = make("span", "slide-name");
-      name.textContent = slide.name || "未命名投影片";
+      name.textContent = slide.name || t("未命名投影片");
       caption.append(counter, name);
       button.append(mini, caption);
       row.append(button);
@@ -1234,17 +1490,19 @@ return function createEditorView({ dom, document, store, slideView, window }) {
   function refreshMini() {
     const active = currentMini();
     if (!active) return;
-    active.querySelector(".slide-name").textContent = store.slide().name || "未命名投影片";
-    slideView.draw(active.querySelector(".slide-surface"), store.slide(), store.deck.assets, "mini");
+    active.querySelector(".slide-name").textContent = store.slide().name || t("未命名投影片");
+    slideView.draw(active.querySelector(".slide-surface"), store.slide(), store.deck.assets, "mini", store.deck.aspectRatio);
   }
 
   function syncStatus() {
     const index = store.index();
     const count = store.deck.slides.length;
+    value("aspectRatio", store.deck.aspectRatio);
+    id("stageRatio").textContent = store.deck.aspectRatio;
     id("pageCount").textContent = String(count);
     id("slidePosition").textContent = (index + 1) + " / " + count;
     id("slidePosition").hidden = !store.deck.presentation.showEditorPageNumber;
-    id("editStatus").textContent = store.isDirty ? "有未儲存的變更" : "雙擊文字可直接編輯";
+    id("editStatus").textContent = store.isDirty ? t("有未儲存的變更") : t("雙擊文字可直接編輯");
     for (const setting of ["showPageNumber", "showEditorPageNumber"]) {
       id(setting).checked = store.deck.presentation[setting];
     }
@@ -1257,6 +1515,7 @@ return function createEditorView({ dom, document, store, slideView, window }) {
 
   function syncGeometry(object) {
     for (const [name, key] of Object.entries(geometry)) value(name, Math.round(object[key] * 10) / 10);
+    if (object.symbol) value("symbolSize", object.size);
   }
 
   function syncInspector() {
@@ -1271,16 +1530,27 @@ return function createEditorView({ dom, document, store, slideView, window }) {
     if (!object) return;
 
     const isText = object.type === "text";
-    id("textFields").hidden = !isText;
+    const isSymbol = isText && object.symbol === true;
+    id("textFields").hidden = !isText || isSymbol;
+    id("symbolFields").hidden = !isSymbol;
+    id("textStyleFields").hidden = !isText;
     id("mediaFields").hidden = isText;
+    id("objW").readOnly = isSymbol;
+    id("objH").readOnly = isSymbol;
+    if (isSymbol) id("selectedSymbol").textContent = object.text;
     if (isText) {
       value("objectText", object.text);
       value("fontSize", object.size);
+      value("fontFamily", model.fontKey(object.font));
+      const hasBackground = /^#[0-9a-f]{6}$/i.test(object.background ?? "");
+      value("textBackground", hasBackground ? object.background : "#ffffff");
+      id("transparentText").checked = !hasBackground;
+      id("textBackground").disabled = !hasBackground;
       value("fontWeight", String(object.weight));
       value("fontColor", object.color);
       value("alignment", object.align);
     } else {
-      id("mediaName").textContent = store.deck.assets[object.asset]?.name ?? "找不到檔案";
+      id("mediaName").textContent = store.deck.assets[object.asset]?.name ?? t("找不到檔案");
     }
     syncGeometry(object);
     id("layerBack").disabled = slide.objects[0] === object;
@@ -1289,7 +1559,7 @@ return function createEditorView({ dom, document, store, slideView, window }) {
 
   function syncTitle() {
     value("deckTitle", store.deck.title);
-    document.title = (store.deck.title || "未命名簡報") + " · HTML 簡報";
+    document.title = (store.deck.title || t("未命名簡報")) + " · " + t("HTML 簡報");
   }
 
   function refreshSlide() {
@@ -1319,7 +1589,7 @@ return function createEditorView({ dom, document, store, slideView, window }) {
 
 // edit-actions.mjs
 const createEditActions = (() => {
-return function createEditActions({ store, model, media }) {
+return function createEditActions({ store, model, media, t = (text) => text }) {
   function insertSlide(slide) {
     const index = store.index() + 1;
     store.edit((state) => {
@@ -1339,7 +1609,7 @@ return function createEditActions({ store, model, media }) {
   function duplicateSlide() {
     const slide = structuredClone(store.slide());
     slide.id = model.makeId();
-    slide.name = (slide.name + "（副本）").slice(0, 100);
+    slide.name = t("{name}（副本）", { name: slide.name }).slice(0, 100);
     for (const object of slide.objects) object.id = model.makeId();
     insertSlide(slide);
   }
@@ -1355,8 +1625,7 @@ return function createEditActions({ store, model, media }) {
     });
   }
 
-  function addText() {
-    const object = model.textObject("輸入文字", [19, 35, 63, 22], 50);
+  function insertObject(object) {
     store.edit((state) => {
       store.slide().objects.push(object);
       state.objectId = object.id;
@@ -1417,15 +1686,17 @@ return function createEditActions({ store, model, media }) {
   }
 
   return {
-    addSlide: (template) => insertSlide(model.slideFromTemplate(template)),
-    moveSlide, duplicateSlide, removeSlide, addText, removeObject, moveLayer, addMedia, replaceMedia,
+    addSlide: (template) => insertSlide(model.slideFromTemplate(template, t)),
+    addText: () => insertObject(model.textObject(t("輸入文字"), [19, 35, 63, 22], 50)),
+    addSymbol: (glyph) => insertObject(model.symbolObject(glyph, store.deck.aspectRatio, store.slide().color)),
+    moveSlide, duplicateSlide, removeSlide, removeObject, moveLayer, addMedia, replaceMedia,
   };
 }
 })();
 
 // canvas-input.mjs
 const bindCanvas = (() => {
-return function bindCanvas({ dom, window, store, model, view, slideView }) {
+return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
   const surface = dom.id("editorSurface");
   let inline = null;
   let gesture = null;
@@ -1444,14 +1715,15 @@ return function bindCanvas({ dom, window, store, model, view, slideView }) {
   }
 
   function openInline(object) {
-    if (object?.type !== "text") return;
+    if (object?.type !== "text" || object.symbol) return;
     closeInline(true);
     const field = dom.make("textarea", "inline-editor");
-    field.setAttribute("aria-label", "直接編輯文字");
+    field.setAttribute("aria-label", t("直接編輯文字"));
     field.value = object.text;
     slideView.applyBox(field, object);
     slideView.applyText(field, object);
     field.style.removeProperty("color");
+    field.style.removeProperty("background-color");
     inline = { field, object };
     surface.append(field);
     field.focus();
@@ -1492,14 +1764,25 @@ return function bindCanvas({ dom, window, store, model, view, slideView }) {
     if (!gesture.active && Math.hypot(dx, dy) < 4) return;
     gesture.active = true;
     const object = gesture.object;
-    const keys = gesture.resize ? ["w", "h"] : ["x", "y"];
-    const units = [dx / gesture.rect.width * 100, dy / gesture.rect.height * 100];
-    store.edit(() => {
-      keys.forEach((key, index) => {
-        object[key] = model.boxValue(object, key, gesture.original[key] + units[index]);
-      });
-    }, gesture);
+    const { original, rect, resize } = gesture;
     const element = surface.querySelector(".slide-object.selected");
+    if (resize && object.symbol) {
+      const width = original.w * rect.width / 100;
+      const height = original.h * rect.height / 100;
+      const scale = 1 + (dx * width + dy * height) / (width ** 2 + height ** 2);
+      const updated = model.resizeSymbol(original, original.size * scale, store.deck.aspectRatio);
+      if (object.size === updated.size) return;
+      store.edit(() => Object.assign(object, updated), gesture);
+      if (element) slideView.applyText(element, object);
+    } else {
+      const keys = resize ? ["w", "h"] : ["x", "y"];
+      const units = [dx / rect.width * 100, dy / rect.height * 100];
+      store.edit(() => {
+        keys.forEach((key, index) => {
+          object[key] = model.boxValue(object, key, original[key] + units[index]);
+        });
+      }, gesture);
+    }
     if (element) slideView.applyBox(element, object);
     view.syncGeometry(object);
     view.syncStatus();
@@ -1532,7 +1815,7 @@ return function bindCanvas({ dom, window, store, model, view, slideView }) {
 const bindEditor = (() => {
 const asNumber = (convert) => (value, object) => value === "" ? undefined : convert(Number(value), object);
 
-return function bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, toast, refreshImportedMedia }) {
+return function bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, symbolPicker, toast, refreshImportedMedia, t }) {
   const { id, on } = dom;
 
   function perform(action, reveal = false) {
@@ -1584,6 +1867,22 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
       view.syncStatus();
     });
   }
+  on("aspectRatio", "change", (event) => {
+    const ratio = event.target.value === "4:3" ? "4:3" : "16:9";
+    if (store.deck.aspectRatio !== ratio) {
+      perform(() => store.edit(({ deck }) => model.setAspectRatio(deck, ratio)), true);
+    }
+  });
+  on("transparentText", "change", (event) => {
+    const object = store.object();
+    if (object?.type !== "text") return;
+    store.edit(() => {
+      object.background = event.target.checked ? "transparent" : id("textBackground").value;
+    });
+    view.refreshSlide();
+    view.syncInspector();
+    view.syncStatus();
+  });
   on("slideUp", "click", () => perform(() => actions.moveSlide(-1), true));
   on("slideDown", "click", () => perform(() => actions.moveSlide(1), true));
   on("duplicateSlide", "click", () => perform(actions.duplicateSlide, true));
@@ -1596,19 +1895,41 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
     view.render();
     canvas.openInline(object);
   });
+  on("addSymbol", "click", symbolPicker.open);
+  on("symbolOptions", "click", (event) => {
+    const glyph = event.target.closest("[data-symbol]")?.dataset.symbol;
+    if (!glyph) return;
+    id("symbolDialog").close();
+    perform(() => actions.addSymbol(glyph));
+  });
+  on("symbolSize", "input", (event) => {
+    const object = store.object();
+    const size = Number(event.target.value);
+    if (!object?.symbol || !event.target.value || !Number.isFinite(size)) return;
+    const updated = model.resizeSymbol(object, size, store.deck.aspectRatio);
+    if (object.size === updated.size) return;
+    store.edit(() => Object.assign(object, updated), event.target);
+    view.refreshSlide();
+    view.syncGeometry(object);
+    view.syncStatus();
+  });
+  on("symbolSize", "blur", () => {
+    store.finishGroup();
+    if (store.object()?.symbol) id("symbolSize").value = store.object().size;
+  });
   on("addMedia", "click", () => id("mediaFiles").click());
   on("mediaFiles", "change", (event) => {
     const files = event.target.files;
     const count = actions.addMedia(files);
-    if (count === 0) toast("請選取圖片、影片或音訊。");
-    else if (count < files.length) toast("已加入支援的圖片與影音。");
+    if (count === 0) toast(t("請選取圖片、影片或音訊。"));
+    else if (count < files.length) toast(t("已加入支援的圖片與影音。"));
     event.target.value = "";
     if (count > 0) view.render();
   });
   on("replaceMedia", "click", () => id("replacementFile").click());
   on("replacementFile", "change", (event) => {
     const result = actions.replaceMedia(event.target.files[0]);
-    if (result === false) toast("請選取圖片、影片或音訊。");
+    if (result === false) toast(t("請選取圖片、影片或音訊。"));
     if (result) {
       view.render();
       refreshImportedMedia();
@@ -1627,9 +1948,12 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
   bindField("fontSize", store.object, "size", asNumber((value) => model.clamp(value, 8, 180)));
   bindField("fontWeight", store.object, "weight", Number);
   bindField("fontColor", store.object, "color");
+  bindField("fontFamily", store.object, "font", model.fontKey);
+  bindField("textBackground", store.object, "background");
   bindField("alignment", store.object, "align");
   for (const [name, key] of Object.entries(view.geometry)) {
-    bindField(name, store.object, key, asNumber((value, item) => model.boxValue(item, key, value)));
+    bindField(name, store.object, key, asNumber((value, item) => item.symbol && (key === "w" || key === "h")
+      ? undefined : model.boxValue(item, key, value)));
   }
 
   window.addEventListener("beforeunload", (event) => {
@@ -1657,7 +1981,7 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
 
 // save-dialog.mjs
 const bindSaveDialog = (() => {
-return function bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, onAttach }) {
+return function bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, onAttach, t, printDeck }) {
   const { id, on } = dom;
   let saving = false;
 
@@ -1665,12 +1989,12 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     const { count, unavailable, relative, canLink } = exporter.inspect(store.deck);
     const pages = store.deck.slides.length;
     id("saveSummary").textContent = count
-      ? pages + " 張投影片，" + count + " 個影音檔案。 ZIP 解壓縮後即可離線開啟。"
-      : pages + " 張投影片。 可直接下載 HTML。";
+      ? t("{pages} 張投影片，{count} 個影音檔案。ZIP 解壓縮後即可離線開啟。", { pages, count })
+      : t("{pages} 張投影片。可直接下載 HTML。", { pages });
     id("sourceTools").hidden = relative === 0;
     id("sourceSummary").textContent = unavailable
-      ? "要重新打包原影音，請選取同時包含原 HTML 與 media 資料夾的資料夾。"
-      : "原影音檔案已就緒。";
+      ? t("要重新打包原影音，請選取同時包含原 HTML 與 media 資料夾的資料夾。")
+      : t("原影音檔案已就緒。");
     id("savePackage").hidden = count === 0;
     id("savePackage").disabled = saving || unavailable > 0;
     id("saveStandalone").disabled = saving || unavailable > 0;
@@ -1678,11 +2002,12 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     id("saveLinked").disabled = saving;
     id("saveStandalone").classList.toggle("primary", count === 0);
     id("pickFolder").disabled = saving;
+    id("savePDF").disabled = saving;
   }
 
   function open() {
     canvas.closeInline(true);
-    id("saveName").value = store.deck.title || "未命名簡報";
+    id("saveName").value = store.deck.title || t("未命名簡報");
     id("saveMessage").textContent = "";
     updateOptions();
     id("saveDialog").showModal();
@@ -1704,18 +2029,18 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     const revision = store.revision;
     const deck = structuredClone(store.deck);
     saving = true;
-    id("saveMessage").textContent = "正在準備下載…";
+    id("saveMessage").textContent = t("正在準備下載…");
     updateOptions();
     try {
       download(await exporter.create(deck, mode, id("saveName").value));
       store.markSaved(revision);
       view.syncStatus();
       id("saveDialog").close();
-      toast(mode === "linked" ? "已開始下載，請將 HTML 放回原本的 media 資料夾旁。" : "已開始下載。");
+      toast(mode === "linked" ? t("已開始下載，請將 HTML 放回原本的 media 資料夾旁。") : t("已開始下載。"));
     } catch (error) {
       id("saveMessage").textContent = error instanceof RangeError
-        ? "影音太大，無法製作這個檔案。請改用 ZIP 或拆成多份簡報。"
-        : error.message || "另存失敗。";
+        ? t("影音太大，無法製作這個檔案。請改用 ZIP 或拆成多份簡報。")
+        : t(error.message || "另存失敗。");
     } finally {
       saving = false;
       updateOptions();
@@ -1726,6 +2051,17 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
   on("savePackage", "click", () => save("package"));
   on("saveStandalone", "click", () => save("standalone"));
   on("saveLinked", "click", () => save("linked"));
+  on("savePDF", "click", async () => {
+    if (saving) return;
+    const filename = id("saveName").value.trim().replace(/\.pdf$/i, "");
+    const deck = structuredClone(store.deck);
+    id("saveDialog").close();
+    try {
+      await printDeck(deck, filename);
+    } catch {
+      toast(t("無法開啟 PDF 列印。"));
+    }
+  });
   on("pickFolder", "click", () => id("sourceFolder").click());
   on("sourceFolder", "change", (event) => {
     const restored = media.attachFolder(event.target.files, model.referencedAssets(store.deck));
@@ -1734,8 +2070,8 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     view.render();
     onAttach();
     id("saveMessage").textContent = restored
-      ? "已找到 " + restored + " 個原影音檔案。"
-      : "選取的資料夾沒有這份簡報的影音。";
+      ? t("已找到 {count} 個原影音檔案。", { count: restored })
+      : t("選取的資料夾沒有這份簡報的影音。");
   });
   for (const event of ["cancel", "submit"]) {
     on("saveDialog", event, (action) => { if (saving) action.preventDefault(); });
@@ -1745,9 +2081,64 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
 }
 })();
 
+// print.mjs
+const bindPrint = (() => {
+return function bindPrint({ document, window, dom, model, slideView, t }) {
+  const pages = dom.id("printPages");
+  let active = false;
+  let previousTitle;
+  let styles;
+
+  function clear() {
+    if (!active) return;
+    active = false;
+    document.title = previousTitle;
+    styles?.remove();
+    pages.replaceChildren();
+  }
+  window.addEventListener("afterprint", clear);
+
+  return async function printDeck(deck, filename) {
+    if (active) return;
+    active = true;
+    previousTitle = document.title;
+    try {
+      const height = model.heightFor(deck.aspectRatio);
+      const sheets = deck.slides.map((slide) => {
+        const page = dom.make("div", "print-page");
+        const surface = dom.make("div", "slide-surface");
+        slideView.draw(surface, slide, deck.assets, "print", deck.aspectRatio);
+        page.append(surface);
+        return page;
+      });
+      pages.replaceChildren(...sheets);
+      styles = dom.make("style");
+      styles.textContent = "@page { size: " + model.WIDTH + "px " + height + "px; margin: 0; }" +
+        ".print-page { width: " + model.WIDTH + "px; height: " + (height - 1) + "px; }";
+      document.head.append(styles);
+
+      const artwork = Array.from(pages.querySelectorAll("img"), (image) => image.decode().catch(() => {}));
+      if (artwork.length) {
+        let timer;
+        await Promise.race([
+          Promise.all(artwork),
+          new Promise((resolve) => { timer = window.setTimeout(resolve, 4500); }),
+        ]);
+        window.clearTimeout(timer);
+      }
+      document.title = filename || deck.title || t("未命名簡報");
+      window.print();
+    } catch (error) {
+      clear();
+      throw error;
+    }
+  };
+}
+})();
+
 // open-deck.mjs
 const bindOpenDeck = (() => {
-return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast }) {
+return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast, t }) {
   const { id, on } = dom;
   let imported = false;
   let opening = false;
@@ -1757,7 +2148,7 @@ return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, can
       media.origin(id) === "relative" && !media.fileFor(id, asset)).length : 0;
     id("importMediaNotice").hidden = missing === 0;
     id("importMediaMessage").textContent = missing
-      ? "請選取原 HTML 所在的資料夾，連結 " + missing + " 個外部影音檔。"
+      ? t("請選取原 HTML 所在的資料夾，連結 {count} 個外部影音檔。", { count: missing })
       : "";
     view.fit();
   }
@@ -1771,15 +2162,15 @@ return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, can
     try {
       const { deck, embedded } = model.openDeck(htmlFormat.readDeck(await file.text()));
       canvas.closeInline(true);
-      if (store.isDirty && !window.confirm("目前簡報有未儲存的變更。要改開「" + file.name + "」嗎？")) return;
+      if (store.isDirty && !window.confirm(t("目前簡報有未儲存的變更。要改開「{name}」嗎？", { name: file.name }))) return;
       media.replaceDeck(embedded);
       store.replaceDeck(deck);
       imported = true;
       view.render();
       refreshMediaNotice();
-      toast("已開啟「" + (deck.title || file.name) + "」，可用新版功能繼續編輯。");
+      toast(t("已開啟「{name}」，可用新版功能繼續編輯。", { name: deck.title || file.name }));
     } catch {
-      toast("無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。");
+      toast(t("無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。"));
     } finally {
       opening = false;
     }
@@ -1791,7 +2182,7 @@ return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, can
     event.target.value = "";
     view.render();
     refreshMediaNotice();
-    toast(restored ? "已連結 " + restored + " 個影音檔。" : "此資料夾沒有這份簡報的影音檔。");
+    toast(restored ? t("已連結 {count} 個影音檔。", { count: restored }) : t("此資料夾沒有這份簡報的影音檔。"));
   });
 
   return { refreshMediaNotice };
@@ -1803,7 +2194,7 @@ const bindPlayback = (() => {
 const CONTROL_DURATION = 3000;
 const CONTROL_EDGE_HEIGHT = 72;
 
-return function bindPlayback({ dom, document, window, store, model, slideView, canvas, toast }) {
+return function bindPlayback({ dom, document, window, store, model, slideView, canvas, toast, t }) {
   const { id, on } = dom;
   const show = id("show");
   const bar = id("showBar");
@@ -1830,12 +2221,12 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
   }
 
   function fit() {
-    if (active()) slideView.fit(id("showStage"), id("showFrame"), id("showSurface"), 0);
+    if (active()) slideView.fit(id("showStage"), id("showFrame"), id("showSurface"), 0, store.deck.aspectRatio);
   }
 
   function draw() {
     const { slides, assets } = store.deck;
-    slideView.draw(id("showSurface"), slides[index], assets, "show");
+    slideView.draw(id("showSurface"), slides[index], assets, "show", store.deck.aspectRatio);
     const position = id("showPosition");
     position.hidden = !store.deck.presentation.showPageNumber;
     position.textContent = (index + 1) + " / " + slides.length;
@@ -1885,11 +2276,11 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
       if (document.fullscreenElement) await document.exitFullscreen();
       else await show.requestFullscreen();
     } catch {
-      toast("瀏覽器目前無法進入全螢幕。");
+      toast(t("瀏覽器目前無法進入全螢幕。"));
     }
   });
   document.addEventListener("fullscreenchange", () => {
-    id("fullscreen").textContent = document.fullscreenElement ? "退出全螢幕" : "全螢幕";
+    id("fullscreen").textContent = document.fullscreenElement ? t("退出全螢幕") : t("全螢幕");
     fit();
     showControls();
   });
@@ -1919,7 +2310,7 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
 
 // template-picker.mjs
 const createTemplatePicker = (() => {
-return function createTemplatePicker({ dom, window, slideView, templates, model }) {
+return function createTemplatePicker({ dom, window, slideView, templates, model, store, t }) {
   const dialog = dom.id("addDialog");
   const options = dom.id("templateOptions");
   const catalog = new Map(templates.map((template) => [template.id, template]));
@@ -1935,29 +2326,31 @@ return function createTemplatePicker({ dom, window, slideView, templates, model 
     button.dataset.layout = template.id;
 
     const frame = dom.make("div", "template-preview");
+    frame.style.aspectRatio = store.deck.aspectRatio.replace(":", " / ");
     frame.setAttribute("aria-hidden", "true");
     const surface = dom.make("div", "slide-surface");
-    slideView.draw(surface, model.slideFromTemplate(template), {}, "mini");
+    slideView.draw(surface, model.slideFromTemplate(template, t), {}, "mini", store.deck.aspectRatio);
     if (template.mediaBox) {
       const placeholder = dom.make("div", "slide-object template-media-preview");
       const [x, y, w, h] = template.mediaBox;
       slideView.applyBox(placeholder, { x, y, w, h });
-      placeholder.textContent = "圖片／影音";
+      placeholder.textContent = t("圖片／影音");
       surface.append(placeholder);
     }
     frame.append(surface);
     previews.push([frame, surface]);
 
     const label = dom.make("strong");
-    label.textContent = template.label;
+    label.textContent = t(template.label);
     const description = dom.make("span");
-    description.textContent = template.description;
+    description.textContent = t(template.description);
     button.append(frame, label, description);
     return button;
   }
 
   function open() {
-    if (previews.length === 0) options.replaceChildren(...templates.map(tile));
+    previews.length = 0;
+    options.replaceChildren(...templates.map(tile));
     dialog.showModal();
     fit();
   }
@@ -1968,25 +2361,76 @@ return function createTemplatePicker({ dom, window, slideView, templates, model 
 }
 })();
 
+// symbol-picker.mjs
+const createSymbolPicker = (() => {
+const GROUPS = [
+  ["箭頭", [
+    ["←", "向左"], ["↑", "向上"], ["→", "向右"], ["↓", "向下"],
+    ["↖", "左上"], ["↗", "右上"], ["↘", "右下"], ["↙", "左下"],
+    ["↔", "左右雙向"], ["↕", "上下雙向"],
+  ]],
+  ["幾何圖形", [
+    ["●", "實心圓"], ["○", "空心圓"], ["■", "實心方形"], ["□", "空心方形"],
+    ["▲", "實心三角形"], ["△", "空心三角形"], ["◆", "實心菱形"], ["◇", "空心菱形"],
+  ]],
+  ["標記", [
+    ["✓", "勾選"], ["×", "叉號"], ["!", "驚嘆號"], ["?", "問號"],
+    ["★", "實心星形"], ["☆", "空心星形"], ["+", "加號"], ["−", "減號"],
+  ]],
+];
+
+return function createSymbolPicker({ dom, t }) {
+  function open() {
+    const groups = GROUPS.map(([name, entries]) => {
+      const section = dom.make("section", "symbol-group");
+      const heading = dom.make("h3");
+      heading.textContent = t(name);
+      const grid = dom.make("div", "symbol-grid");
+      for (const [glyph, label] of entries) {
+        const button = dom.make("button", "button symbol-option symbol-glyph");
+        button.type = "button";
+        button.dataset.symbol = glyph;
+        button.textContent = glyph;
+        button.title = t(label);
+        button.setAttribute("aria-label", t(label));
+        grid.append(button);
+      }
+      section.append(heading, grid);
+      return section;
+    });
+    dom.id("symbolOptions").replaceChildren(...groups);
+    dom.id("symbolDialog").showModal();
+  }
+  return { open };
+}
+})();
+
 // main.mjs
 const start = (() => {
 return function start({ window, document, modules }) {
   const {
     model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter,
-    createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, slideTemplates, createTemplatePicker,
+    createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, slideTemplates, createTemplatePicker, createSymbolPicker, createI18n, bindPrint, messages,
   } = modules;
   const dom = createDOM(document);
   const serialize = htmlFormat.capture(document);
+  const language = createI18n({ window, document, messages, select: dom.id("language") });
+  const { t } = language;
   const { deck, embedded } = model.openDeck(JSON.parse(dom.id("deckData").textContent));
   const store = createStore(deck);
   const urls = window.URL;
   const media = createMedia({ embedded, makeId: model.makeId, filenames, urls });
-  const exporter = createExporter({ model, media, filenames, serialize, makeZip });
-  const slideView = createSlideView({ dom, media, model });
-  const view = createEditorView({ dom, document, store, slideView, window });
-  const canvas = bindCanvas({ dom, window, store, model, view, slideView });
-  const actions = createEditActions({ store, model, media });
-  const templatePicker = createTemplatePicker({ dom, window, slideView, templates: slideTemplates, model });
+  const exporter = createExporter({ model, media, filenames, serialize, makeZip, t });
+  const slideView = createSlideView({ dom, media, model, t });
+  const view = createEditorView({ dom, document, store, slideView, window, model, t });
+  const canvas = bindCanvas({ dom, window, store, model, view, slideView, t });
+  const actions = createEditActions({ store, model, media, t });
+  const templatePicker = createTemplatePicker({ dom, window, slideView, templates: slideTemplates, model, store, t });
+
+  const symbolPicker = createSymbolPicker({ dom, t });
+  const symbolSize = dom.id("symbolSize");
+  symbolSize.min = model.MIN_SYMBOL_SIZE;
+  symbolSize.max = model.MAX_SYMBOL_SIZE;
 
   let toastTimer;
   function toast(message) {
@@ -1997,12 +2441,13 @@ return function start({ window, document, modules }) {
     toastTimer = window.setTimeout(() => { element.hidden = true; }, 3300);
   }
 
-  const openDeck = bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast });
-  const editor = bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, toast,
+  const openDeck = bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast, t });
+  const editor = bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, symbolPicker, toast, t,
     refreshImportedMedia: openDeck.refreshMediaNotice });
-  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls,
+  const printDeck = bindPrint({ document, window, dom, model, slideView, t });
+  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, t, printDeck,
     onAttach: openDeck.refreshMediaNotice });
-  const playback = bindPlayback({ dom, document, window, store, model, slideView, canvas, toast });
+  const playback = bindPlayback({ dom, document, window, store, model, slideView, canvas, toast, t });
   window.addEventListener("keydown", (event) => {
     if (event.defaultPrevented || event.isComposing) return;
     if (playback.active()) {
@@ -2023,6 +2468,12 @@ return function start({ window, document, modules }) {
     editor.keydown(event);
   });
 
+  dom.on("language", "change", (event) => {
+    canvas.closeInline(true);
+    language.change(event.target.value);
+    view.render();
+    openDeck.refreshMediaNotice();
+  });
   const observer = new window.ResizeObserver(() => {
     view.fit();
     playback.fit();
@@ -2036,125 +2487,150 @@ return function start({ window, document, modules }) {
 const slideTemplates = [
   {
     "id": "cover",
-    "label": "封面",
-    "description": "簡報標題與副標題",
-    "color": "#203831",
-    "pattern": "grid",
+    "label": "暖金封面",
+    "description": "深綠底與暖金幾何弧線",
+    "color": "#183b33",
+    "pattern": "cover",
     "text": [
       {
         "text": "簡報標題",
         "box": [
-          7,
-          29,
-          86,
-          25
+          8,
+          31,
+          65,
+          23
         ],
-        "size": 94,
-        "color": "#fff6de",
-        "weight": 900
+        "size": 84,
+        "color": "#fff7e8",
+        "weight": 700,
+        "font": "serif",
+        "align": "left"
       },
       {
         "text": "副標題",
         "box": [
-          7,
-          61,
-          83,
-          17
+          8,
+          62,
+          60,
+          18
         ],
-        "size": 32,
-        "color": "#dfe6c9"
+        "size": 34,
+        "color": "#e8bd8b",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
     ]
   },
   {
     "id": "content",
-    "label": "標題與內文",
-    "name": "內容",
-    "description": "通用內容頁",
-    "color": "#f6f2e7",
+    "label": "編輯式內文",
+    "description": "細線頁首與寬版內文",
+    "color": "#fbf7ee",
+    "pattern": "editorial",
     "text": [
       {
         "text": "標題",
         "box": [
-          7,
-          12,
-          86,
-          17
+          8,
+          10,
+          84,
+          19
         ],
-        "size": 69,
-        "weight": 900
+        "size": 62,
+        "color": "#233b35",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "輸入內文",
         "box": [
-          7,
-          39,
-          84,
-          46
+          8,
+          42,
+          82,
+          43
         ],
-        "size": 40
+        "size": 39,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
-    ]
+    ],
+    "name": "內容"
   },
   {
     "id": "section",
     "label": "章節頁",
-    "description": "切換主題或段落",
-    "color": "#224238",
+    "description": "深藍分色，標示新的章節",
+    "color": "#253748",
+    "pattern": "section",
     "text": [
       {
         "text": "章節名稱",
         "box": [
-          9,
-          42,
-          82,
-          27
+          8,
+          36,
+          79,
+          22
         ],
-        "size": 104,
-        "color": "#fff4d8",
-        "weight": 900
+        "size": 86,
+        "color": "#fff7e8",
+        "weight": 700,
+        "font": "serif",
+        "align": "left"
       },
       {
         "text": "輸入本節的主題",
         "box": [
-          9.5,
-          72,
-          81,
-          13
+          8,
+          65,
+          66,
+          16
         ],
-        "size": 33,
-        "color": "#dce7c6"
+        "size": 36,
+        "color": "#d2e0ea",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
     ]
   },
   {
     "id": "bullets",
     "label": "重點條列",
-    "description": "條列三項重點或摘要",
-    "color": "#f3e5d6",
+    "description": "適合摘要與結論",
+    "color": "#f6ebdf",
+    "pattern": "editorial",
     "text": [
       {
         "text": "重點整理",
         "box": [
           8,
-          12,
+          10,
           84,
-          17
+          19
         ],
-        "size": 74,
-        "color": "#492c24",
-        "weight": 900
+        "size": 62,
+        "color": "#233b35",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "•  第一項重點\n•  第二項重點\n•  第三項重點",
         "box": [
-          9,
-          38,
-          77,
-          50
+          8,
+          41,
+          84,
+          51
         ],
-        "size": 53,
-        "color": "#4f382f"
+        "size": 48,
+        "color": "#654537",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
     ]
   },
@@ -2162,228 +2638,278 @@ const slideTemplates = [
     "id": "columns",
     "label": "雙欄比較",
     "description": "並列兩個概念或方案",
-    "color": "#e8eee5",
+    "color": "#e7eee9",
+    "pattern": "columns",
     "text": [
       {
         "text": "比較主題",
         "box": [
-          7,
+          8,
           10,
-          86,
-          17
+          84,
+          19
         ],
-        "size": 72,
-        "weight": 900
+        "size": 62,
+        "color": "#233b35",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "左欄標題",
         "box": [
-          7,
-          38,
-          39,
-          12
+          12,
+          47,
+          34,
+          11
         ],
-        "size": 45,
-        "color": "#a34127",
-        "weight": 700
+        "size": 40,
+        "color": "#963f2f",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "輸入左欄內容",
         "box": [
-          7,
-          54,
-          39,
-          35
+          12,
+          61,
+          34,
+          24
         ],
-        "size": 36
+        "size": 34,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "右欄標題",
         "box": [
           54,
-          38,
-          39,
-          12
+          47,
+          34,
+          11
         ],
-        "size": 45,
-        "color": "#315744",
-        "weight": 700
+        "size": 40,
+        "color": "#255648",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "輸入右欄內容",
         "box": [
           54,
-          54,
-          39,
-          35
+          61,
+          34,
+          24
         ],
-        "size": 36
+        "size": 34,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
     ]
   },
   {
     "id": "media",
-    "label": "文字＋影音",
-    "description": "左側文字，右側留給圖片或影片",
-    "color": "#f7f1e4",
-    "mediaBox": [
-      39,
-      34,
-      54,
-      55
-    ],
+    "label": "圖文版面",
+    "description": "左側文字，右側放置圖片或影片",
+    "color": "#f5f0e6",
+    "pattern": "media",
     "text": [
       {
         "text": "圖文或影音主題",
         "box": [
-          7,
-          11,
-          86,
-          17
+          8,
+          10,
+          84,
+          19
         ],
-        "size": 67,
-        "weight": 900
+        "size": 62,
+        "color": "#233b35",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "輸入說明文字",
         "box": [
-          7,
-          39,
-          29,
-          50
+          8,
+          44,
+          28,
+          40
         ],
-        "size": 38
+        "size": 38,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
+    ],
+    "mediaBox": [
+      41,
+      34,
+      52,
+      57
     ]
   },
   {
     "id": "steps",
     "label": "操作步驟",
-    "description": "三個並排的流程步驟",
-    "color": "#e9e9de",
+    "description": "並排呈現三個步驟",
+    "color": "#dce8e2",
+    "pattern": "steps",
     "text": [
       {
         "text": "操作流程",
         "box": [
-          7,
+          8,
           10,
-          86,
-          17
+          84,
+          19
         ],
-        "size": 72,
-        "weight": 900
+        "size": 62,
+        "color": "#233b35",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "1. 準備",
         "box": [
-          7,
-          41,
-          26,
-          11
+          10,
+          46,
+          22,
+          13
         ],
-        "size": 45,
-        "color": "#a34127",
-        "weight": 700
+        "size": 36,
+        "color": "#255648",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "輸入準備事項",
         "box": [
-          7,
-          57,
-          26,
-          34
+          10,
+          62,
+          22,
+          24
         ],
-        "size": 31
+        "size": 30,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "2. 執行",
         "box": [
-          37,
-          41,
-          26,
-          11
+          39,
+          46,
+          22,
+          13
         ],
-        "size": 45,
-        "color": "#a34127",
-        "weight": 700
+        "size": 36,
+        "color": "#255648",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "輸入操作內容",
         "box": [
-          37,
-          57,
-          26,
-          34
+          39,
+          62,
+          22,
+          24
         ],
-        "size": 31
+        "size": 30,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "3. 確認",
         "box": [
-          67,
-          41,
-          26,
-          11
+          68,
+          46,
+          22,
+          13
         ],
-        "size": 45,
-        "color": "#a34127",
-        "weight": 700
+        "size": 36,
+        "color": "#255648",
+        "weight": 700,
+        "font": "sans",
+        "align": "left"
       },
       {
         "text": "寫下確認方式",
         "box": [
-          67,
-          57,
-          26,
-          34
+          68,
+          62,
+          22,
+          24
         ],
-        "size": 31
+        "size": 30,
+        "color": "#485e56",
+        "weight": 400,
+        "font": "sans",
+        "align": "left"
       }
     ]
   },
   {
     "id": "discussion",
     "label": "提問與討論",
-    "description": "獨立展示一個討論題目",
-    "color": "#f1daca",
-    "pattern": "dots",
+    "description": "溫暖留白，聚焦一個問題",
+    "color": "#f9efe1",
+    "pattern": "quote",
     "text": [
       {
         "text": "討論時間",
         "box": [
-          9,
+          12,
           22,
-          82,
+          76,
           12
         ],
-        "size": 43,
-        "color": "#793e2d",
+        "size": 35,
+        "color": "#8c4c34",
         "weight": 700,
+        "font": "sans",
         "align": "center"
       },
       {
         "text": "你會怎麼做？",
         "box": [
-          9,
+          12,
           39,
-          82,
-          23
+          76,
+          17
         ],
-        "size": 87,
-        "color": "#48291e",
-        "weight": 900,
+        "size": 74,
+        "color": "#492f27",
+        "weight": 700,
+        "font": "serif",
         "align": "center"
       },
       {
         "text": "請說明你的想法。",
         "box": [
-          9,
+          12,
           68,
-          82,
+          76,
           12
         ],
-        "size": 34,
-        "color": "#664c41",
+        "size": 33,
+        "color": "#654537",
+        "weight": 400,
+        "font": "sans",
         "align": "center"
       }
     ]
@@ -2391,14 +2917,434 @@ const slideTemplates = [
   {
     "id": "blank",
     "label": "空白",
-    "name": "空白投影片",
     "description": "自行加入物件",
-    "color": "#f6f2e7",
-    "text": []
+    "color": "#fffdf8",
+    "pattern": "plain",
+    "text": [],
+    "name": "空白投影片"
   }
 ];
 
-start({ window, document, modules: { model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, createTemplatePicker, slideTemplates } });
+const messages = {
+  "en": {
+    "1. 準備": "1. Prepare",
+    "2. 執行": "2. Do",
+    "3. 確認": "3. Verify",
+    "HTML 簡報": "HTML Slides",
+    "ZIP 大小超過此編輯器的 4 GB 上限。請分成多份簡報。": "The ZIP exceeds the 4 GB limit. Split the presentation into smaller files.",
+    "{name}（副本）": "{name} (copy)",
+    "{pages} 張投影片。可直接下載 HTML。": "Slides: {pages}. Download as HTML.",
+    "{pages} 張投影片，{count} 個影音檔案。ZIP 解壓縮後即可離線開啟。": "Slides: {pages}. Media files: {count}. Extract the ZIP to open it offline.",
+    "•  第一項重點\n•  第二項重點\n•  第三項重點": "•  First point\n•  Second point\n•  Third point",
+    "一般": "Regular",
+    "三欄底板": "Three panels",
+    "上一頁": "Previous slide",
+    "上移投影片": "Move slide up",
+    "下一頁": "Next slide",
+    "下移投影片": "Move slide down",
+    "下載 HTML＋影音 ZIP": "Download HTML + media ZIP",
+    "下載單一 HTML": "Download single HTML file",
+    "並列兩個概念或方案": "Compare two ideas or options",
+    "並排呈現三個步驟": "Show three steps side by side",
+    "介面語言": "Interface language",
+    "你會怎麼做？": "What would you do?",
+    "內容": "Content",
+    "全螢幕": "Fullscreen",
+    "刪除": "Delete",
+    "副標題": "Subtitle",
+    "匯出 PDF": "Export PDF",
+    "原影音檔案已就緒。": "Original media is ready.",
+    "另存失敗。": "Could not save the file.",
+    "另存新檔": "Save as",
+    "只下載 HTML（沿用原影音）": "Download HTML only (keep media links)",
+    "右欄標題": "Right heading",
+    "圓點": "Dots",
+    "圖文分割": "Media panel",
+    "圖文或影音主題": "Media and text",
+    "圖文版面": "Media and text",
+    "圖片": "Image",
+    "圖片／影音": "Media",
+    "在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。": "Choose “Save as PDF” in the print dialog. Each slide takes one page.",
+    "垂直位置 %": "Y position (%)",
+    "字級": "Size",
+    "字重": "Weight",
+    "字體": "Font",
+    "寫下確認方式": "How to verify",
+    "寬度 %": "Width (%)",
+    "對齊": "Alignment",
+    "左側文字，右側放置圖片或影片": "Text on the left, image or video on the right",
+    "左欄標題": "Left heading",
+    "已加入支援的圖片與影音。": "Added the supported media files.",
+    "已找到 {count} 個原影音檔案。": "Found {count} original media file(s).",
+    "已連結 {count} 個影音檔。": "Linked {count} media file(s).",
+    "已開啟「{name}」，可用新版功能繼續編輯。": "Opened “{name}” in this editor.",
+    "已開始下載。": "Download started.",
+    "已開始下載，請將 HTML 放回原本的 media 資料夾旁。": "Download started. Keep the HTML beside its original media folder.",
+    "幾何弧線": "Geometric arcs",
+    "影片": "Video",
+    "影音": "Media",
+    "影音太大，無法製作這個檔案。請改用 ZIP 或拆成多份簡報。": "Media is too large. Use ZIP or split the presentation.",
+    "從目前頁播放（F5）": "Present from current slide (F5)",
+    "復原": "Undo",
+    "復原（Ctrl+Z）": "Undo (Ctrl+Z)",
+    "我的簡報": "My presentation",
+    "找不到影音檔案 {name}": "Media file not found: {name}",
+    "找不到檔案": "Missing file",
+    "投影片": "Slides",
+    "投影片列表": "Slide list",
+    "投影片名稱": "Slide name",
+    "投影片操作": "Slide actions",
+    "投影片比例": "Slide aspect ratio",
+    "投影片範本": "Slide templates",
+    "投影片與物件設定": "Slide and object settings",
+    "提問與討論": "Discussion",
+    "播放": "Present",
+    "播放控制": "Presentation controls",
+    "播放時顯示頁碼": "Show page numbers in presentation",
+    "播放模式": "Presentation mode",
+    "操作步驟": "Steps",
+    "操作流程": "Workflow",
+    "文字": "Text",
+    "文字內容": "Text content",
+    "文字框背景色": "Text box background",
+    "文字顏色": "Text color",
+    "斜面分色": "Diagonal bands",
+    "方格": "Grid",
+    "暖金封面": "Gold cover",
+    "更換檔案": "Replace file",
+    "有未儲存的變更": "Unsaved changes",
+    "未命名投影片": "Untitled slide",
+    "未命名簡報": "Untitled presentation",
+    "標題": "Heading",
+    "檔案名稱": "File name",
+    "正在準備下載…": "Preparing download…",
+    "此資料夾沒有這份簡報的影音檔。": "This folder has no media for this presentation.",
+    "比較主題": "Comparison",
+    "水平位置 %": "X position (%)",
+    "深綠底與暖金幾何弧線": "Forest green with warm gold arcs",
+    "深藍分色，標示新的章節": "Deep blue bands to introduce a section",
+    "溫暖留白，聚焦一個問題": "A warm frame for a single question",
+    "瀏覽器目前無法進入全螢幕。": "The browser could not enter fullscreen.",
+    "無法讀取影音檔案。": "Could not read the media file.",
+    "無法開啟 PDF 列印。": "Could not open the PDF print dialog.",
+    "無法開啟 {name}": "Could not open {name}",
+    "無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。": "Could not open this file. Choose an .html file saved by HTML Slides.",
+    "無襯線 · Arial／黑體": "Sans serif · Arial",
+    "物件": "Objects",
+    "特粗": "Black",
+    "留白邊框": "Inset frame",
+    "目前投影片": "Current slide",
+    "目前簡報有未儲存的變更。要改開「{name}」嗎？": "This presentation has unsaved changes. Open “{name}” anyway?",
+    "直接編輯文字": "Edit text on slide",
+    "移到底層": "Send to back",
+    "移到頂層": "Bring to front",
+    "空白": "Blank",
+    "空白投影片": "Blank slide",
+    "章節名稱": "Section title",
+    "章節頁": "Section divider",
+    "等寬 · Courier New／等寬": "Monospace · Courier New",
+    "簡報名稱": "Presentation title",
+    "簡報引用了一個不存在的影音檔案。": "The presentation refers to a missing media file.",
+    "簡報標題": "Presentation title",
+    "簡報設定": "Presentation settings",
+    "粗體": "Bold",
+    "純色": "Solid color",
+    "細線頁首": "Fine rule",
+    "細線頁首與寬版內文": "Fine rule with a wide text area",
+    "編輯式內文": "Editorial content",
+    "編輯時顯示頁碼": "Show page numbers while editing",
+    "編輯畫布": "Editing canvas",
+    "置中": "Center",
+    "背景圖樣": "Background design",
+    "背景色": "Background color",
+    "自動": "Auto",
+    "自行加入物件": "Add your own objects",
+    "複製": "Duplicate",
+    "襯線 · Times New Roman／明體": "Serif · Times New Roman",
+    "要重新打包原影音，請選取同時包含原 HTML 與 media 資料夾的資料夾。": "To repackage the original media, select the folder that contains both the original HTML and its media folder.",
+    "討論時間": "Discussion",
+    "設定": "Settings",
+    "請使用 ZIP 或單一 HTML 保留新增的影音。": "Use ZIP or a single HTML file to include newly added media.",
+    "請說明你的想法。": "Share your reasoning.",
+    "請選取原 HTML 所在的資料夾，連結 {count} 個外部影音檔。": "Select the original HTML folder to link {count} external media file(s).",
+    "請選取圖片、影片或音訊。": "Choose an image, video, or audio file.",
+    "輸入內文": "Add body text",
+    "輸入右欄內容": "Add right column text",
+    "輸入左欄內容": "Add left column text",
+    "輸入操作內容": "Describe the action",
+    "輸入文字": "Type here",
+    "輸入本節的主題": "Introduce this section",
+    "輸入準備事項": "What to prepare",
+    "輸入說明文字": "Add a caption",
+    "退出": "Exit",
+    "退出全螢幕": "Exit fullscreen",
+    "透明背景": "Transparent background",
+    "適合摘要與結論": "For summaries and conclusions",
+    "選取原簡報的資料夾": "Select original presentation folder",
+    "選取的資料夾沒有這份簡報的影音。": "No media for this presentation in the selected folder.",
+    "選取舊簡報資料夾": "Select original folder",
+    "選擇投影片範本": "Choose a slide template",
+    "重做": "Redo",
+    "重做（Ctrl+Shift+Z）": "Redo (Ctrl+Shift+Z)",
+    "重點整理": "Key takeaways",
+    "重點條列": "Key points",
+    "開啟 HTML 簡報": "Open an HTML presentation",
+    "開啟簡報": "Open",
+    "關閉": "Close",
+    "雙擊文字可直接編輯": "Double-click text to edit it",
+    "雙欄底板": "Two panels",
+    "雙欄比較": "Side-by-side comparison",
+    "靠右": "Right",
+    "靠左": "Left",
+    "音訊": "Audio",
+    "預設字體": "Default",
+    "高度 %": "Height (%)",
+    "點選投影片上的物件，即可調整內容與位置。": "Select an object to edit its content or position.",
+    "符號": "Symbols",
+    "插入符號": "Insert a symbol",
+    "符號大小": "Symbol size",
+    "拖曳右下角可等比例縮放。": "Drag the bottom-right corner to scale proportionally.",
+    "箭頭": "Arrows",
+    "幾何圖形": "Shapes",
+    "標記": "Marks",
+    "向左": "Left arrow",
+    "向上": "Up arrow",
+    "向右": "Right arrow",
+    "向下": "Down arrow",
+    "左上": "Upper left arrow",
+    "右上": "Upper right arrow",
+    "左下": "Lower left arrow",
+    "右下": "Lower right arrow",
+    "左右雙向": "Left-right arrow",
+    "上下雙向": "Up-down arrow",
+    "實心圓": "Filled circle",
+    "空心圓": "Outline circle",
+    "實心方形": "Filled square",
+    "空心方形": "Outline square",
+    "實心三角形": "Filled triangle",
+    "空心三角形": "Outline triangle",
+    "實心菱形": "Filled diamond",
+    "空心菱形": "Outline diamond",
+    "勾選": "Check mark",
+    "叉號": "Cross",
+    "驚嘆號": "Exclamation mark",
+    "問號": "Question mark",
+    "實心星形": "Filled star",
+    "空心星形": "Outline star",
+    "加號": "Plus sign",
+    "減號": "Minus sign"
+  },
+  "ja": {
+    "1. 準備": "1. 準備",
+    "2. 執行": "2. 実行",
+    "3. 確認": "3. 確認",
+    "HTML 簡報": "HTML スライド",
+    "ZIP 大小超過此編輯器的 4 GB 上限。請分成多份簡報。": "ZIP が 4 GB の上限を超えています。プレゼンを分割してください。",
+    "{name}（副本）": "{name}（コピー）",
+    "{pages} 張投影片。可直接下載 HTML。": "スライド {pages} 枚。HTML でダウンロードできます。",
+    "{pages} 張投影片，{count} 個影音檔案。ZIP 解壓縮後即可離線開啟。": "スライド {pages} 枚、メディア {count} 件。ZIP を展開するとオフラインで開けます。",
+    "•  第一項重點\n•  第二項重點\n•  第三項重點": "•  要点その1\n•  要点その2\n•  要点その3",
+    "一般": "標準",
+    "三欄底板": "3 列パネル",
+    "上一頁": "前のスライド",
+    "上移投影片": "スライドを上へ",
+    "下一頁": "次のスライド",
+    "下移投影片": "スライドを下へ",
+    "下載 HTML＋影音 ZIP": "HTML とメディアを ZIP で保存",
+    "下載單一 HTML": "単一 HTML を保存",
+    "並列兩個概念或方案": "2 つの案を並べて比較",
+    "並排呈現三個步驟": "3 つの手順を横に並べる",
+    "介面語言": "表示言語",
+    "你會怎麼做？": "あなたならどうしますか？",
+    "內容": "内容",
+    "全螢幕": "全画面",
+    "刪除": "削除",
+    "副標題": "サブタイトル",
+    "匯出 PDF": "PDF に書き出す",
+    "原影音檔案已就緒。": "元のメディアを利用できます。",
+    "另存失敗。": "保存できませんでした。",
+    "另存新檔": "名前を付けて保存",
+    "只下載 HTML（沿用原影音）": "HTML のみ保存（元のメディアへのリンクを維持）",
+    "右欄標題": "右列の見出し",
+    "圓點": "ドット",
+    "圖文分割": "メディアパネル",
+    "圖文或影音主題": "図版と説明",
+    "圖文版面": "図版と説明",
+    "圖片": "画像",
+    "圖片／影音": "画像・音声・動画",
+    "在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。": "印刷画面で「PDF に保存」を選択してください。スライド 1 枚につき 1 ページです。",
+    "垂直位置 %": "Y 位置 (%)",
+    "字級": "サイズ",
+    "字重": "太さ",
+    "字體": "フォント",
+    "寫下確認方式": "確認方法を入力",
+    "寬度 %": "幅 (%)",
+    "對齊": "文字揃え",
+    "左側文字，右側放置圖片或影片": "左に説明、右に画像または動画",
+    "左欄標題": "左列の見出し",
+    "已加入支援的圖片與影音。": "対応するメディアを追加しました。",
+    "已找到 {count} 個原影音檔案。": "元のメディアを {count} 件見つけました。",
+    "已連結 {count} 個影音檔。": "メディアを {count} 件リンクしました。",
+    "已開啟「{name}」，可用新版功能繼續編輯。": "「{name}」を開きました。",
+    "已開始下載。": "ダウンロードを開始しました。",
+    "已開始下載，請將 HTML 放回原本的 media 資料夾旁。": "ダウンロードを開始しました。HTML は元の media フォルダと同じ場所に置いてください。",
+    "幾何弧線": "幾何学の弧",
+    "影片": "動画",
+    "影音": "メディア",
+    "影音太大，無法製作這個檔案。請改用 ZIP 或拆成多份簡報。": "メディアが大きすぎます。ZIP を使用するか、プレゼンを分割してください。",
+    "從目前頁播放（F5）": "現在のスライドから再生（F5）",
+    "復原": "元に戻す",
+    "復原（Ctrl+Z）": "元に戻す（Ctrl+Z）",
+    "我的簡報": "マイプレゼン",
+    "找不到影音檔案 {name}": "メディアが見つかりません: {name}",
+    "找不到檔案": "ファイルが見つかりません",
+    "投影片": "スライド",
+    "投影片列表": "スライド一覧",
+    "投影片名稱": "スライド名",
+    "投影片操作": "スライド操作",
+    "投影片比例": "スライドの縦横比",
+    "投影片範本": "テンプレート",
+    "投影片與物件設定": "スライドとオブジェクトの設定",
+    "提問與討論": "ディスカッション",
+    "播放": "再生",
+    "播放控制": "再生コントロール",
+    "播放時顯示頁碼": "再生時にページ番号を表示",
+    "播放模式": "プレゼン表示",
+    "操作步驟": "手順",
+    "操作流程": "操作の流れ",
+    "文字": "テキスト",
+    "文字內容": "テキスト内容",
+    "文字框背景色": "テキスト枠の背景色",
+    "文字顏色": "文字色",
+    "斜面分色": "斜めの帯",
+    "方格": "グリッド",
+    "暖金封面": "金色の表紙",
+    "更換檔案": "ファイルを差し替え",
+    "有未儲存的變更": "未保存の変更があります",
+    "未命名投影片": "無題のスライド",
+    "未命名簡報": "無題のプレゼン",
+    "標題": "見出し",
+    "檔案名稱": "ファイル名",
+    "正在準備下載…": "ダウンロードを準備中…",
+    "此資料夾沒有這份簡報的影音檔。": "このフォルダには該当するメディアがありません。",
+    "比較主題": "比較",
+    "水平位置 %": "X 位置 (%)",
+    "深綠底與暖金幾何弧線": "深緑に金色の弧",
+    "深藍分色，標示新的章節": "深い青の帯で章の始まりを示す",
+    "溫暖留白，聚焦一個問題": "やわらかな余白で問いを引き立てる",
+    "瀏覽器目前無法進入全螢幕。": "全画面表示に切り替えられませんでした。",
+    "無法讀取影音檔案。": "メディアを読み込めませんでした。",
+    "無法開啟 PDF 列印。": "PDF の印刷画面を開けませんでした。",
+    "無法開啟 {name}": "{name} を開けません",
+    "無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。": "ファイルを開けませんでした。HTML スライドで保存した .html を選択してください。",
+    "無襯線 · Arial／黑體": "ゴシック体 · Arial",
+    "物件": "オブジェクト",
+    "特粗": "極太",
+    "留白邊框": "細い内枠",
+    "目前投影片": "現在のスライド",
+    "目前簡報有未儲存的變更。要改開「{name}」嗎？": "未保存の変更があります。「{name}」を開きますか？",
+    "直接編輯文字": "スライド上で文字を編集",
+    "移到底層": "最背面へ",
+    "移到頂層": "最前面へ",
+    "空白": "白紙",
+    "空白投影片": "白紙のスライド",
+    "章節名稱": "章のタイトル",
+    "章節頁": "章の扉",
+    "等寬 · Courier New／等寬": "等幅 · Courier New",
+    "簡報名稱": "プレゼン名",
+    "簡報引用了一個不存在的影音檔案。": "参照先のメディアが見つかりません。",
+    "簡報標題": "プレゼンのタイトル",
+    "簡報設定": "プレゼン設定",
+    "粗體": "太字",
+    "純色": "単色",
+    "細線頁首": "細い罫線",
+    "細線頁首與寬版內文": "細い罫線と広い本文欄",
+    "編輯式內文": "誌面風の本文",
+    "編輯時顯示頁碼": "編集中にページ番号を表示",
+    "編輯畫布": "編集キャンバス",
+    "置中": "中央揃え",
+    "背景圖樣": "背景のデザイン",
+    "背景色": "背景色",
+    "自動": "自動",
+    "自行加入物件": "自由にオブジェクトを追加",
+    "複製": "複製",
+    "襯線 · Times New Roman／明體": "明朝体 · Times New Roman",
+    "要重新打包原影音，請選取同時包含原 HTML 與 media 資料夾的資料夾。": "元のメディアを再梱包するには、元の HTML と media フォルダを含むフォルダを選択してください。",
+    "討論時間": "ディスカッション",
+    "設定": "設定",
+    "請使用 ZIP 或單一 HTML 保留新增的影音。": "追加したメディアを含めるには ZIP または単一 HTML を使用してください。",
+    "請說明你的想法。": "考えを聞かせてください。",
+    "請選取原 HTML 所在的資料夾，連結 {count} 個外部影音檔。": "元の HTML があるフォルダを選択して外部メディア {count} 件をリンクしてください。",
+    "請選取圖片、影片或音訊。": "画像、動画、音声を選択してください。",
+    "輸入內文": "本文を入力",
+    "輸入右欄內容": "右列に本文を入力",
+    "輸入左欄內容": "左列に本文を入力",
+    "輸入操作內容": "実行内容を入力",
+    "輸入文字": "テキストを入力",
+    "輸入本節的主題": "この章のテーマを入力",
+    "輸入準備事項": "準備内容を入力",
+    "輸入說明文字": "説明を入力",
+    "退出": "終了",
+    "退出全螢幕": "全画面を終了",
+    "透明背景": "透明な背景",
+    "適合摘要與結論": "まとめや結論に",
+    "選取原簡報的資料夾": "元のプレゼンフォルダを選択",
+    "選取的資料夾沒有這份簡報的影音。": "選択したフォルダに該当するメディアがありません。",
+    "選取舊簡報資料夾": "元のフォルダを選択",
+    "選擇投影片範本": "テンプレートを選択",
+    "重做": "やり直す",
+    "重做（Ctrl+Shift+Z）": "やり直す（Ctrl+Shift+Z）",
+    "重點整理": "要点",
+    "重點條列": "箇条書き",
+    "開啟 HTML 簡報": "HTML プレゼンを開く",
+    "開啟簡報": "開く",
+    "關閉": "閉じる",
+    "雙擊文字可直接編輯": "テキストをダブルクリックして編集",
+    "雙欄底板": "2 列パネル",
+    "雙欄比較": "2 列比較",
+    "靠右": "右揃え",
+    "靠左": "左揃え",
+    "音訊": "音声",
+    "預設字體": "既定",
+    "高度 %": "高さ (%)",
+    "點選投影片上的物件，即可調整內容與位置。": "オブジェクトを選択して内容や位置を調整します。",
+    "符號": "記号",
+    "插入符號": "記号を挿入",
+    "符號大小": "記号のサイズ",
+    "拖曳右下角可等比例縮放。": "右下の角をドラッグすると等比で拡大・縮小できます。",
+    "箭頭": "矢印",
+    "幾何圖形": "図形",
+    "標記": "マーク",
+    "向左": "左矢印",
+    "向上": "上矢印",
+    "向右": "右矢印",
+    "向下": "下矢印",
+    "左上": "左上矢印",
+    "右上": "右上矢印",
+    "左下": "左下矢印",
+    "右下": "右下矢印",
+    "左右雙向": "左右矢印",
+    "上下雙向": "上下矢印",
+    "實心圓": "黒丸",
+    "空心圓": "白丸",
+    "實心方形": "黒四角",
+    "空心方形": "白四角",
+    "實心三角形": "黒三角",
+    "空心三角形": "白三角",
+    "實心菱形": "黒ひし形",
+    "空心菱形": "白ひし形",
+    "勾選": "チェックマーク",
+    "叉號": "バツ印",
+    "驚嘆號": "感嘆符",
+    "問號": "疑問符",
+    "實心星形": "黒い星",
+    "空心星形": "白い星",
+    "加號": "プラス記号",
+    "減號": "マイナス記号"
+  }
+};
+
+start({ window, document, modules: { model, createDOM, createI18n, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindPrint, bindOpenDeck, bindPlayback, createTemplatePicker, createSymbolPicker, slideTemplates, messages } });
 </script>
 </body>
 </html>
