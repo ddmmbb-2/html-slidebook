@@ -1,0 +1,2404 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>HTML 簡報</title>
+<style>
+:root {
+  font-family: "Geist", "Inter", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif;
+  color: #272822;
+  background: #f8f7f3;
+  font-size: 14px;
+  --paper: #fbfaf6;
+  --panel: #fffefb;
+  --border: #e4e0d6;
+  --ink: #272822;
+  --muted: #686963;
+  --accent: #a63e22;
+  --accent-dark: #893017;
+  --accent-light: #faeee7;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .4; cursor: default; }
+:focus-visible { outline: 2px solid #a63e22; outline-offset: 2px; }
+h2, h3, p { margin: 0; }
+.app-header {
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.brand { display: flex; gap: 9px; align-items: center; font-size: 16px; font-weight: 750; white-space: nowrap; }
+.app-version { color: var(--muted); font: 11px ui-monospace, monospace; }
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 30px;
+  border-radius: 7px;
+  color: white;
+  background: var(--accent);
+  font-size: 17px;
+}
+.document-title { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding-left: 20px; border-left: 1px solid var(--border); }
+.document-title label { color: var(--muted); white-space: nowrap; font-size: 12px; }
+.document-title input { max-width: 340px; border-color: transparent; background: transparent; font-weight: 650; }
+.document-title input:hover, .document-title input:focus { border-color: var(--border); background: white; }
+.header-actions, .button-group, .slide-actions, .layer-actions, .show-navigation { display: flex; align-items: center; gap: 7px; }
+.button {
+  padding: 7px 11px;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: inherit;
+  background: var(--panel);
+  font-weight: 630;
+  white-space: nowrap;
+}
+.button:hover:enabled { background: #f3f0e8; }
+.button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.button.primary:hover:enabled { background: var(--accent-dark); border-color: var(--accent-dark); }
+.button.icon { min-width: 34px; padding: 5px; font-size: 17px; line-height: 1; }
+.button.small { padding: 5px 8px; font-size: 12px; }
+.header-actions .button { padding: 8px 13px; }
+.button span[aria-hidden] { margin-right: 3px; }
+.text-icon { font-family: Georgia,serif; font-size: 16px; }
+.workspace { height: calc(100dvh - 65px); min-height: 425px; display: grid; grid-template-columns: 192px minmax(0, 1fr) 248px; }
+.slides-pane, .inspector { background: var(--panel); min-height: 0; }
+.slides-pane { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.inspector { border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+.pane-heading { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 15px; }
+.pane-heading h2 { font-size: 14px; }
+.count { color: var(--muted); font: 12px ui-monospace, monospace; }
+.outline-add { margin: 0 12px 13px; color: var(--accent-dark); text-align: left; }
+.slide-list { list-style: none; overflow: auto; flex: 1; padding: 2px 11px 10px; margin: 0; }
+.slide-list li { margin-bottom: 8px; }
+.slide-item {
+  width: 100%;
+  text-align: left;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+}
+.slide-item:hover { background: #f6f3ed; }
+.slide-item[aria-current="true"] { background: var(--accent-light); border-color: #c67053; }
+.mini-frame, .frame { width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative; }
+.mini-frame { border: 1px solid #17170925; border-radius: 3px; }
+.slide-caption { display: flex; gap: 8px; align-items: baseline; margin-top: 5px; }
+.slide-index { color: var(--accent-dark); font: 11px ui-monospace, monospace; }
+.slide-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 630; }
+.slide-actions { justify-content: center; border-top: 1px solid var(--border); padding: 9px 4px; gap: 4px; }
+.slide-actions .icon { min-width: 27px; }
+.compose { display: grid; grid-template-rows: 52px minmax(0, 1fr) 38px; min-width: 0; min-height: 0; background: #f3f0e9; }
+.compose:has(.import-media-notice:not([hidden])) { grid-template-rows: 52px auto minmax(0, 1fr) 38px; }
+.import-media-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  padding: 5px 12px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.edit-bar { background: var(--paper); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; padding: 0 14px; }
+.insert-buttons { border-left: 1px solid var(--border); padding-left: 14px; }
+.stage { min-height: 0; display: grid; place-items: center; position: relative; overflow: hidden; background-image: radial-gradient(#cdc6b9 1px, transparent 1px); background-size: 16px 16px; }
+.stage > .frame { width: 0; background: var(--paper); box-shadow: 0 14px 38px #3b30232b, 0 0 0 1px #312c221f; }
+.slide-surface { position: absolute; width: 1280px; height: 720px; transform-origin: top left; overflow: hidden; color: #202620; }
+.slide-surface[data-pattern="grid"] { background-image: linear-gradient(90deg, #96978c39 1px, transparent 1px), linear-gradient(#96978c39 1px, transparent 1px); background-size: 64px 64px; }
+.slide-surface[data-pattern="dots"] { background-image: radial-gradient(#96978c82 1.4px, transparent 1.4px); background-size: 24px 24px; }
+.slide-object { position: absolute; min-width: 0; min-height: 0; }
+.slide-text {
+  font-family: "Geist", "Inter", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif;
+  line-height: 1.19;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+}
+.slide-media { display: grid; place-items: center; }
+.media-element { display: block; max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; }
+.media-element:not(audio) { position: absolute; inset: 0; }
+audio.media-element { height: 54px; }
+.media-fallback, .mini-media {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  overflow: hidden;
+  text-align: center;
+  overflow-wrap: anywhere;
+  background: #292a26e8;
+  color: #fffdf8;
+  border: 1px solid #ffffff5a;
+  font-size: 22px;
+}
+.mini-media { font-size: 35px; }
+.slide-surface.editing .slide-object { cursor: move; touch-action: none; user-select: none; }
+.slide-surface.editing .media-element { pointer-events: none; }
+.slide-surface.editing .slide-object:hover { outline: 2px dashed #ed905c; }
+.slide-surface.editing .slide-object.selected { outline: 3px solid #f08856; outline-offset: 2px; }
+.slide-surface .inline-editor {
+  position: absolute;
+  z-index: 10000;
+  resize: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 3px solid #f08856;
+  outline-offset: 2px;
+  background: #fffdf7f5;
+  color: #292822;
+  font-family: inherit;
+  line-height: 1.19;
+  overflow-wrap: anywhere;
+}
+.stage-status { display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center; text-align: center; border-top: 1px solid var(--border); background: var(--paper); color: var(--muted); font-size: 12px; padding: 0 14px; }
+.stage-status span:first-child { text-align: left; }
+.stage-status span { grid-row: 1; }
+#slidePosition { grid-column: 1; }
+#editStatus { grid-column: 2; }
+.stage-status span:last-child { text-align: right; grid-column: 3; }
+.inspector-body { overflow: auto; }
+.inspector-section { padding: 0 15px 16px; }
+.inspector-section + .inspector-section { border-top: 1px solid var(--border); padding-top: 15px; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; min-height: 25px; margin-bottom: 8px; gap: 6px; }
+.section-heading h3 { font-size: 13px; }
+.field-label, .field-grid label { display: block; font-size: 12px; color: var(--muted); margin: 9px 0 5px; }
+input:not([type="file"]), select, textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--ink);
+  background: white;
+}
+textarea { resize: vertical; }
+input[type="color"] { width: 39px; height: 28px; min-height: 28px; padding: 2px; cursor: pointer; }
+.color-row { display: flex; justify-content: space-between; align-items: center; gap: 7px; margin-top: 10px; color: var(--muted); font-size: 12px; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 7px; }
+.field-grid input, .field-grid select { display: block; margin-top: 4px; }
+.geometry { margin-top: 3px; }
+.layer-actions { margin-top: 9px; flex-wrap: wrap; gap: 5px; }
+.quiet-button { border: 0; background: transparent; color: var(--accent-dark); padding: 3px; }
+.quiet-button:hover { text-decoration: underline; }
+.hint { color: var(--muted); font-size: 12px; line-height: 1.55; }
+.media-name { font-size: 12px; overflow-wrap: anywhere; margin-bottom: 7px; }
+dialog {
+  width: min(460px, calc(100vw - 26px));
+  max-height: calc(100dvh - 25px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 17px 20px 19px;
+  color: var(--ink);
+  background: var(--panel);
+  box-shadow: 0 20px 75px #32251b42;
+}
+dialog::backdrop { background: #261f1a6b; }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 13px; margin-bottom: 12px; }
+.dialog-head h2 { font-size: 18px; }
+.show-page-setting {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.show-page-setting + .show-page-setting { margin-top: 8px; }
+input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+#addDialog { width: min(740px, calc(100vw - 26px)); }
+.layout-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.template-option {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  text-align: left;
+  white-space: normal;
+  gap: 3px;
+  padding: 7px;
+}
+.template-preview {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 3px;
+  margin-bottom: 3px;
+  outline: 1px solid #241e161a;
+  pointer-events: none;
+}
+.template-media-preview {
+  display: grid;
+  place-items: center;
+  border: 4px dashed #756d5e;
+  border-radius: 14px;
+  color: #64594a;
+  background: #e8e0cf;
+  font-size: 42px;
+}
+.template-option span { color: var(--muted); font-size: 12px; font-weight: 400; }
+.save-options { display: grid; gap: 7px; }
+@media (max-width: 560px) {
+  .layout-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 320px) {
+  .layout-options { grid-template-columns: minmax(0, 1fr); }
+}
+#saveSummary, .save-options, .source-tools { margin-top: 12px; }
+.source-tools .hint { margin-top: 5px; }
+.save-message { margin-top: 8px; min-height: 1.4em; font-size: 12px; color: var(--accent-dark); }
+.show { position: fixed; inset: 0; z-index: 10; color: #fff; background: #100f0e; }
+.show:focus { outline: none; }
+.show-stage { position: absolute; inset: 0; display: grid; place-items: center; }
+.show-stage > .frame { width: 0; }
+.show-bar {
+  position: absolute;
+  z-index: 2;
+  bottom: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: #1b1b19e8;
+  border: 1px solid #ffffff4a;
+}
+.show-bar .button { background: #292927; color: white; border-color: #ffffff4a; }
+.show-bar .button:hover:enabled { background: #444440; }
+.show-navigation span { min-width: 63px; text-align: center; font: 12px ui-monospace, monospace; }
+@media (max-width: 420px) {
+  .show-bar, .show-navigation { gap: 5px; }
+  .show-bar .button { padding-inline: 6px; }
+  .show-navigation span { min-width: 44px; }
+}
+kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
+.toast { position: fixed; z-index: 20; bottom: 48px; right: 16px; padding: 9px 13px; border-radius: 6px; color: white; background: #302821; max-width: calc(100% - 32px); }
+@media (max-width: 950px) {
+  .workspace { grid-template-columns: 146px minmax(0, 1fr) 207px; }
+  .pane-heading { padding-inline: 10px; }
+  .inspector-section { padding-inline: 10px; }
+  .slide-list { padding-inline: 7px; }
+}
+@media (max-width: 690px) {
+  .app-header { min-height: 60px; gap: 8px; padding: 7px 8px; }
+  .brand-name, .document-title label { display: none; }
+  .brand { gap: 4px; }
+  .app-version { font-size: 10px; }
+  .header-actions { gap: 4px; }
+  .header-actions .button span { display: none; }
+  .document-title { border: 0; padding-left: 0; }
+  .header-actions .button { padding: 6px 8px; }
+  .workspace { height: auto; grid-template-columns: 1fr; grid-template-areas: "compose" "slides" "inspector"; }
+  .compose { grid-area: compose; grid-template-rows: 45px minmax(205px, 48vw) 30px; }
+  .compose:has(.import-media-notice:not([hidden])) { grid-template-rows: 45px auto minmax(205px, 48vw) 30px; }
+  .slides-pane { grid-area: slides; border: 0; }
+  .inspector { grid-area: inspector; border: 0; border-top: 1px solid var(--border); }
+  .pane-heading { min-height: 40px; }
+  .outline-add { align-self: flex-start; margin-bottom: 6px; }
+  .slide-list { display: flex; flex: initial; overflow-x: auto; padding-block: 4px; gap: 4px; }
+  .slide-list li { width: 115px; flex: none; margin: 0; }
+  .slide-actions { justify-content: flex-start; padding-inline: 10px; }
+  .inspector-body { overflow: visible; }
+  .edit-bar { padding-inline: 8px; gap: 7px; }
+  .insert-buttons { padding-left: 7px; }
+  .stage-status { font-size: 11px; }
+}
+
+.document-title input { background: transparent; border-color: transparent; }
+.slide-surface textarea.inline-editor { border: 0; padding: 0; min-height: 0; border-radius: 0; background: #fffdf7f5; }
+.resize-handle {
+  position: absolute;
+  z-index: 2;
+  bottom: 0;
+  right: 0;
+  width: 23px;
+  height: 23px;
+  background: #f08856;
+  border: 2px solid #fffdf9;
+  border-radius: 3px;
+  cursor: nwse-resize;
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name">HTML 簡報</span><span class="app-version">v1.3.2</span></div>
+  <div class="document-title">
+    <label for="deckTitle">簡報名稱</label>
+    <input id="deckTitle" maxlength="100" placeholder="未命名簡報">
+  </div>
+  <div class="header-actions">
+    <button id="openDeck" class="button" title="開啟 HTML 簡報">開啟簡報</button>
+    <input id="deckFile" type="file" accept=".html,.htm,text/html" hidden>
+    <button id="play" class="button" title="從目前頁播放（F5）"><span aria-hidden="true">▷</span> 播放</button>
+    <button id="save" class="button primary"><span aria-hidden="true">↓</span> 另存新檔</button>
+  </div>
+</header>
+<main class="workspace" id="workspace">
+  <aside class="slides-pane" aria-label="投影片列表">
+    <div class="pane-heading"><h2>投影片</h2><span id="pageCount" class="count"></span></div>
+    <button id="newSlide" class="button outline-add"><span aria-hidden="true">＋</span> 投影片範本</button>
+    <ol id="slideList" class="slide-list"></ol>
+    <div class="slide-actions" aria-label="投影片操作">
+      <button class="button icon" id="slideUp" title="上移投影片" aria-label="上移投影片">↑</button>
+      <button class="button icon" id="slideDown" title="下移投影片" aria-label="下移投影片">↓</button>
+      <button class="button small" id="duplicateSlide">複製</button>
+      <button class="button small" id="removeSlide">刪除</button>
+    </div>
+  </aside>
+  <section class="compose" aria-label="編輯畫布">
+    <div class="edit-bar">
+      <div class="button-group">
+        <button class="button icon" id="undo" title="復原（Ctrl+Z）" aria-label="復原">↶</button>
+        <button class="button icon" id="redo" title="重做（Ctrl+Shift+Z）" aria-label="重做">↷</button>
+      </div>
+      <div class="button-group insert-buttons">
+        <button class="button" id="addText"><span class="text-icon" aria-hidden="true">T</span> 文字</button>
+        <button class="button" id="addMedia"><span aria-hidden="true">▧</span> 圖片／影音</button>
+        <input id="mediaFiles" type="file" accept="image/*,video/*,audio/*,.m4a,.ogg" multiple hidden>
+      </div>
+    </div>
+    <div id="importMediaNotice" class="import-media-notice" hidden>
+      <span id="importMediaMessage" role="status"></span>
+      <button id="chooseImportedFolder" class="button small">選取舊簡報資料夾</button>
+      <input id="importedFolder" type="file" webkitdirectory multiple hidden>
+    </div>
+    <div class="stage" id="stage">
+      <div class="frame" id="frame"><div class="slide-surface" id="editorSurface" aria-label="目前投影片"></div></div>
+    </div>
+    <footer class="stage-status"><span id="slidePosition"></span><span id="editStatus">雙擊文字可直接編輯</span><span>16:9</span></footer>
+  </section>
+  <aside class="inspector" aria-label="投影片與物件設定">
+    <div class="pane-heading"><h2>設定</h2></div>
+    <div class="inspector-body">
+      <section class="inspector-section presentation-section">
+        <div class="section-heading"><h3>頁碼顯示</h3></div>
+        <label class="show-page-setting"><input type="checkbox" id="showPageNumber" checked> 播放時顯示頁碼</label>
+        <label class="show-page-setting"><input type="checkbox" id="showEditorPageNumber" checked> 編輯時顯示頁碼</label>
+      </section>
+      <section class="inspector-section">
+        <div class="section-heading"><h3>投影片</h3></div>
+        <label class="field-label" for="slideName">投影片名稱</label>
+        <input id="slideName" maxlength="100">
+        <div class="color-row">
+          <label for="slideColor">背景色</label>
+          <input type="color" id="slideColor">
+        </div>
+        <label class="field-label" for="slidePattern">背景圖樣</label>
+        <select id="slidePattern">
+          <option value="plain">純色</option>
+          <option value="grid">方格</option>
+          <option value="dots">圓點</option>
+        </select>
+      </section>
+      <section class="inspector-section object-section">
+        <div class="section-heading"><h3>物件</h3><button id="removeObject" class="quiet-button" hidden>刪除</button></div>
+        <p id="objectHint" class="hint">點選投影片上的文字、圖片或影音，即可調整內容與位置。</p>
+        <div id="objectFields" hidden>
+          <div id="textFields">
+            <label class="field-label" for="objectText">文字內容</label>
+            <textarea id="objectText" rows="3"></textarea>
+            <div class="field-grid">
+              <label>字級<input id="fontSize" type="number" min="8" max="180" step="1"></label>
+              <label>字重<select id="fontWeight"><option value="400">一般</option><option value="700">粗體</option><option value="900">特粗</option></select></label>
+            </div>
+            <div class="color-row"><label for="fontColor">文字顏色</label><input type="color" id="fontColor"></div>
+            <label class="field-label" for="alignment">對齊</label>
+            <select id="alignment"><option value="left">靠左</option><option value="center">置中</option><option value="right">靠右</option></select>
+          </div>
+          <div id="mediaFields" hidden>
+            <p class="media-name" id="mediaName"></p>
+            <button class="button small" id="replaceMedia">更換檔案</button>
+            <input id="replacementFile" type="file" accept="image/*,video/*,audio/*,.m4a,.ogg" hidden>
+          </div>
+          <div class="field-grid geometry">
+            <label>水平位置 %<input id="objX" type="number" min="0" max="99" step="0.1"></label>
+            <label>垂直位置 %<input id="objY" type="number" min="0" max="99" step="0.1"></label>
+            <label>寬度 %<input id="objW" type="number" min="1" max="100" step="0.1"></label>
+            <label>高度 %<input id="objH" type="number" min="1" max="100" step="0.1"></label>
+          </div>
+          <div class="layer-actions">
+            <button class="button small" id="layerBack">移到底層</button>
+            <button class="button small" id="layerFront">移到頂層</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </aside>
+</main>
+<dialog id="addDialog">
+  <form method="dialog" class="dialog-head"><h2>選擇投影片範本</h2><button class="button icon" aria-label="關閉">×</button></form>
+  <div id="templateOptions" class="layout-options"></div>
+</dialog>
+<dialog id="saveDialog">
+  <form method="dialog" class="dialog-head"><h2>另存新檔</h2><button class="button icon" aria-label="關閉">×</button></form>
+  <label class="field-label" for="saveName">檔案名稱</label>
+  <input id="saveName" maxlength="100" placeholder="我的簡報">
+  <p class="hint" id="saveSummary"></p>
+  <div id="sourceTools" class="source-tools" hidden>
+    <button class="button small" id="pickFolder">選取原簡報的資料夾</button>
+    <input id="sourceFolder" type="file" webkitdirectory multiple hidden>
+    <p class="hint" id="sourceSummary"></p>
+  </div>
+  <div class="save-options">
+    <button class="button primary" id="savePackage">下載 HTML＋影音 ZIP</button>
+    <button class="button" id="saveStandalone">下載單一 HTML</button>
+    <button class="button" id="saveLinked">只下載 HTML（沿用原影音）</button>
+  </div>
+  <p class="save-message" id="saveMessage" role="status"></p>
+</dialog>
+<section id="show" class="show" aria-label="播放模式" tabindex="-1" hidden>
+  <div id="showStage" class="show-stage">
+    <div id="showFrame" class="frame"><div id="showSurface" class="slide-surface"></div></div>
+  </div>
+  <div id="showBar" class="show-bar" aria-label="播放控制" hidden>
+    <button class="button" id="exitShow">退出 <kbd>Esc</kbd></button>
+    <div class="show-navigation">
+      <button class="button icon" id="prevShow" aria-label="上一頁">←</button>
+      <span id="showPosition" aria-live="polite"></span>
+      <button class="button icon" id="nextShow" aria-label="下一頁">→</button>
+    </div>
+    <button class="button" id="fullscreen">全螢幕</button>
+  </div>
+</section>
+<div class="toast" id="toast" role="status" hidden></div>
+<script id="deckData" type="application/json">
+{
+  "version": 1,
+  "title": "我的 HTML 簡報",
+  "assets": {},
+  "slides": [
+    {
+      "id": "cover",
+      "name": "封面",
+      "color": "#233a33",
+      "pattern": "grid",
+      "objects": [
+        {
+          "id": "cover-title",
+          "type": "text",
+          "text": "我的 HTML\n簡報",
+          "x": 7,
+          "y": 20,
+          "w": 86,
+          "h": 45,
+          "size": 111,
+          "color": "#fff6dd",
+          "weight": 900,
+          "align": "left"
+        },
+        {
+          "id": "cover-subtitle",
+          "type": "text",
+          "text": "編輯、播放、另存，一個檔案帶著走。",
+          "x": 7.4,
+          "y": 72,
+          "w": 85,
+          "h": 13,
+          "size": 33,
+          "color": "#dbe4ba",
+          "weight": 400,
+          "align": "left"
+        }
+      ]
+    },
+    {
+      "id": "editing",
+      "name": "編輯投影片",
+      "color": "#f6f0de",
+      "pattern": "plain",
+      "objects": [
+        {
+          "id": "edit-title",
+          "type": "text",
+          "text": "編輯投影片",
+          "x": 7,
+          "y": 11,
+          "w": 86,
+          "h": 17,
+          "size": 78,
+          "color": "#233a33",
+          "weight": 900,
+          "align": "left"
+        },
+        {
+          "id": "edit-body",
+          "type": "text",
+          "text": "雙擊文字，直接在畫布上修改。\n點選物件後拖曳位置，或拉右下角調整大小。\n用「圖片／影音」加入自己的檔案。",
+          "x": 7.5,
+          "y": 37,
+          "w": 85,
+          "h": 47,
+          "size": 41,
+          "color": "#3b493e",
+          "weight": 400,
+          "align": "left"
+        }
+      ]
+    },
+    {
+      "id": "save",
+      "name": "帶走簡報",
+      "color": "#f2d8c6",
+      "pattern": "dots",
+      "objects": [
+        {
+          "id": "save-title",
+          "type": "text",
+          "text": "帶走簡報",
+          "x": 7,
+          "y": 11,
+          "w": 86,
+          "h": 17,
+          "size": 78,
+          "color": "#48291e",
+          "weight": 900,
+          "align": "left"
+        },
+        {
+          "id": "save-body",
+          "type": "text",
+          "text": "單一 HTML：將文字、圖片和影音裝進一個檔案。\nHTML＋影音 ZIP：解壓縮後，開啟裡面的 HTML。\n下次雙擊 HTML，就能接著編輯或播放。",
+          "x": 7.5,
+          "y": 37,
+          "w": 85,
+          "h": 47,
+          "size": 38,
+          "color": "#48291e",
+          "weight": 400,
+          "align": "left"
+        }
+      ]
+    }
+  ]
+}
+</script>
+<script>
+"use strict";
+
+// model.mjs
+const model = (() => {
+const WIDTH = 1280;
+const HEIGHT = 720;
+const FORMAT_VERSION = 1;
+
+function makeId() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(12)), (byte) =>
+    byte.toString(16).padStart(2, "0")).join("");
+}
+
+function openDeck(saved) {
+  if (saved.version !== FORMAT_VERSION || typeof saved.title !== "string" ||
+      !Array.isArray(saved.slides) || saved.slides.length === 0) {
+    throw new Error("無法讀取此版本的簡報資料。");
+  }
+  const embedded = new Map();
+  const assets = Object.fromEntries(Object.entries(saved.assets ?? {}).map(([id, asset]) => {
+    const { data, ...metadata } = asset;
+    if (data) embedded.set(id, data);
+    return [id, metadata];
+  }));
+  const deck = {
+    version: FORMAT_VERSION,
+    title: saved.title,
+    slides: saved.slides,
+    assets,
+    presentation: {
+      showPageNumber: saved.presentation?.showPageNumber !== false,
+      showEditorPageNumber: saved.presentation?.showEditorPageNumber !== false,
+    },
+  };
+  return { deck, embedded };
+}
+
+function referencedAssets(deck) {
+  const ids = new Set();
+  for (const slide of deck.slides) {
+    for (const object of slide.objects) {
+      if (object.type === "media") ids.add(object.asset);
+    }
+  }
+  return Array.from(ids, (id) => [id, deck.assets[id]]);
+}
+
+function clamp(number, min, max) {
+  return Math.min(max, Math.max(min, number));
+}
+
+function boxValue(object, key, value) {
+  const limits = { x: [0, 100 - object.w], y: [0, 100 - object.h], w: [1, 100 - object.x], h: [1, 100 - object.y] };
+  return clamp(value, ...limits[key]);
+}
+
+function textObject(text, box, size, color = "#25322d", weight = 400) {
+  const [x, y, w, h] = box;
+  return { id: makeId(), type: "text", x, y, w, h, text, size, color, weight, align: "left" };
+}
+
+function slideFromTemplate(template) {
+  return {
+    id: makeId(),
+    name: template.name ?? template.label,
+    color: template.color,
+    pattern: template.pattern ?? "plain",
+    ...(template.mediaBox ? { mediaBox: [...template.mediaBox] } : {}),
+    objects: template.text.map((item) => ({
+      ...textObject(item.text, item.box, item.size, item.color, item.weight),
+      align: item.align ?? "left",
+    })),
+  };
+}
+
+function mediaObject(assetId, kind, index, placement) {
+  const offset = (index % 5) * 4;
+  const audio = kind === "audio";
+  const fallback = [18 + offset, (audio ? 60 : 12) + offset, 54, audio ? 9 : 60];
+  const [x, y, w, h] = placement ?? fallback;
+  return { id: makeId(), type: "media", asset: assetId, x, y, w, h };
+}
+
+return {
+  WIDTH, HEIGHT, makeId, openDeck, referencedAssets, clamp, boxValue,
+  textObject, slideFromTemplate, mediaObject,
+};
+})();
+
+// dom.mjs
+const createDOM = (() => {
+return function createDOM(document) {
+  const id = (name) => document.getElementById(name);
+
+  function make(tag, className) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    return element;
+  }
+
+  function value(name, next) {
+    const field = id(name);
+    if (document.activeElement !== field) field.value = next;
+  }
+
+  return { id, make, value, on: (name, event, handler) => id(name).addEventListener(event, handler) };
+}
+})();
+
+// store.mjs
+const createStore = (() => {
+const MAX_HISTORY = 60;
+
+return function createStore(deck) {
+  let state = { deck, slideId: deck.slides[0].id, objectId: null };
+  let savedRevision = 0;
+  let revision = 0;
+  let group = null;
+  const undoStack = [];
+  const redoStack = [];
+
+  const index = () => state.deck.slides.findIndex((slide) => slide.id === state.slideId);
+  const slide = () => state.deck.slides[index()];
+  const object = () => slide().objects.find((item) => item.id === state.objectId);
+  const finishGroup = () => { group = null; };
+
+  function edit(mutate, token = null) {
+    if (token === null || token !== group) {
+      undoStack.push(structuredClone(state));
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      redoStack.length = 0;
+    }
+    group = token;
+    mutate(state);
+    revision++;
+  }
+
+  function restore(from, to) {
+    if (from.length === 0) return false;
+    finishGroup();
+    to.push(structuredClone(state));
+    state = from.pop();
+    revision++;
+    return true;
+  }
+
+  function replaceDeck(nextDeck) {
+    finishGroup();
+    undoStack.length = 0;
+    redoStack.length = 0;
+    state = { deck: nextDeck, slideId: nextDeck.slides[0].id, objectId: null };
+    revision++;
+  }
+
+  function selectSlide(id) {
+    if (state.slideId === id || !state.deck.slides.some((item) => item.id === id)) return false;
+    finishGroup();
+    state.slideId = id;
+    state.objectId = null;
+    return true;
+  }
+
+  function selectObject(id) {
+    if (state.objectId === id) return false;
+    finishGroup();
+    state.objectId = id;
+    return true;
+  }
+
+  return {
+    get deck() { return state.deck; },
+    get slideId() { return state.slideId; },
+    get objectId() { return state.objectId; },
+    get isDirty() { return revision !== savedRevision; },
+    get canUndo() { return undoStack.length > 0; },
+    get canRedo() { return redoStack.length > 0; },
+    get revision() { return revision; },
+    markSaved(value) { if (value === revision) savedRevision = value; },
+    index, slide, object, edit, replaceDeck, selectSlide, selectObject, finishGroup,
+    undo: () => restore(undoStack, redoStack),
+    redo: () => restore(redoStack, undoStack),
+  };
+}
+})();
+
+// filenames.mjs
+const filenames = (() => {
+const utf8 = new TextEncoder();
+
+function clean(name, fallback, maxBytes = 190) {
+  const normalized = name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").trim().replace(/^[.]+|[. ]+$/g, "");
+  let shortened = "";
+  let size = 0;
+  for (const character of normalized) {
+    size += utf8.encode(character).byteLength;
+    if (size > maxBytes) break;
+    shortened += character;
+  }
+  shortened = shortened.replace(/[. ]+$/g, "") || fallback;
+  return /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(shortened) ? "_" + shortened : shortened;
+}
+
+function relativeURL(path) {
+  if (!path?.startsWith("media/")) return null;
+  const parts = path.split("/");
+  if (parts.some((part) => !part || part === "." || part === ".." || /[\\\u0000-\u001f]/.test(part))) return null;
+  return parts.map(encodeURIComponent).join("/");
+}
+
+return { utf8, clean, relativeURL };
+})();
+
+// media.mjs
+const createMedia = (() => {
+const labels = { image: "圖片", video: "影片", audio: "音訊" };
+const fileKinds = {
+  png: ["image", "image/png"], jpg: ["image", "image/jpeg"], jpeg: ["image", "image/jpeg"],
+  gif: ["image", "image/gif"], webp: ["image", "image/webp"], svg: ["image", "image/svg+xml"],
+  avif: ["image", "image/avif"], bmp: ["image", "image/bmp"], ico: ["image", "image/x-icon"],
+  mp4: ["video", "video/mp4"], webm: ["video", "video/webm"], mov: ["video", "video/quicktime"],
+  m4v: ["video", "video/mp4"], ogv: ["video", "video/ogg"],
+  mp3: ["audio", "audio/mpeg"], m4a: ["audio", "audio/mp4"], wav: ["audio", "audio/wav"],
+  ogg: ["audio", "audio/ogg"], oga: ["audio", "audio/ogg"], flac: ["audio", "audio/flac"],
+  aac: ["audio", "audio/aac"], opus: ["audio", "audio/ogg"],
+};
+
+function withMime(file, mime) {
+  return file.type === mime ? file : file.slice(0, file.size, mime);
+}
+
+return function createMedia({ embedded, makeId, filenames, urls }) {
+  const added = new Map();
+  const attached = new Map();
+  const cachedURLs = new Map();
+  let allowRelative = true;
+
+  function replaceDeck(nextEmbedded) {
+    for (const url of cachedURLs.values()) urls.revokeObjectURL(url);
+    cachedURLs.clear();
+    added.clear();
+    attached.clear();
+    embedded = nextEmbedded;
+    allowRelative = false;
+  }
+
+  function prepare(file) {
+    const extension = file.name.match(/\.([a-z0-9]{1,12})$/i)?.[1]?.toLowerCase() ?? "";
+    const [knownKind, knownMime] = Object.hasOwn(fileKinds, extension) ? fileKinds[extension] : [];
+    const kind = knownKind ?? file.type.split("/")[0];
+    if (!Object.hasOwn(labels, kind)) return null;
+    const mime = knownMime ?? file.type;
+    const id = makeId();
+    const suffix = extension ? "." + extension : "";
+    const stem = filenames.clean(file.name.slice(0, file.name.length - suffix.length), "影音", 175);
+    const path = "media/" + id.slice(0, 12) + "-" + stem + suffix;
+    return { id, asset: { kind, mime, name: file.name, path, bytes: file.size }, file: withMime(file, mime) };
+  }
+
+  function origin(id) {
+    if (added.has(id)) return "added";
+    if (embedded.has(id)) return "embedded";
+    return "relative";
+  }
+
+  function fileFor(id, asset) {
+    const file = added.get(id) ?? attached.get(asset?.path);
+    return file ? withMime(file, asset.mime) : null;
+  }
+
+  function source(id, asset) {
+    const file = fileFor(id, asset);
+    if (!file) return embedded.get(id) ?? (allowRelative ? filenames.relativeURL(asset?.path) : null);
+    if (!cachedURLs.has(id)) cachedURLs.set(id, urls.createObjectURL(file));
+    return cachedURLs.get(id);
+  }
+
+  function attachFolder(files, references) {
+    const relativePaths = new Map(references.filter(([id, asset]) =>
+      asset && origin(id) === "relative").map(([id, asset]) => [asset.path, id]));
+    let restored = 0;
+    for (const file of files) {
+      const path = file.webkitRelativePath.split("/").slice(1).join("/");
+      const id = relativePaths.get(path);
+      if (!id) continue;
+      if (cachedURLs.has(id)) urls.revokeObjectURL(cachedURLs.get(id));
+      cachedURLs.delete(id);
+      attached.set(path, file);
+      restored++;
+    }
+    return restored;
+  }
+
+  return {
+    labels, prepare, origin, fileFor, source, attachFolder, replaceDeck,
+    remember: ({ id, file }) => added.set(id, file),
+    embeddedData: (id) => embedded.get(id),
+  };
+}
+})();
+
+// html-format.mjs
+const htmlFormat = (() => {
+const SLOT = "HTML_SLIDES_DECK_CONTENT_SLOT";
+
+function encodeDeck(deck) {
+  return JSON.stringify(deck).replace(/</g, "\\u003c");
+}
+
+function capture(document) {
+  const html = document.documentElement.cloneNode(true);
+  const payload = html.querySelector("#deckData");
+  payload.textContent = SLOT;
+  const source = "<!doctype html>\n" + html.outerHTML;
+  const tag = payload.outerHTML;
+  const start = source.indexOf(tag);
+  if (start === -1) throw new Error("找不到簡報資料區。");
+  const offset = start + tag.indexOf(">") + 1;
+  const before = source.slice(0, offset) + "\n";
+  const after = "\n" + source.slice(offset + SLOT.length);
+  return (deck) => new Blob([before, encodeDeck(deck), after], { type: "text/html;charset=utf-8" });
+}
+
+function readDeck(html) {
+  const scripts = html.matchAll(/<script\b((?:"[^"]*"|'[^']*'|[^"'<>])*)>([\s\S]*?)<\/script\s*>/gi);
+  for (const [, attributes, content] of scripts) {
+    const parsed = new Map(Array.from(attributes.matchAll(/([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s]+))/g),
+      ([, name, doubleQuoted, singleQuoted, bare]) => [name.toLowerCase(), doubleQuoted ?? singleQuoted ?? bare]));
+    if (parsed.get("id") === "deckData" && parsed.get("type") === "application/json") {
+      const deck = JSON.parse(content);
+      if (!Array.isArray(deck.slides) || !deck.slides.every((slide) =>
+        slide && typeof slide.id === "string" && Array.isArray(slide.objects) &&
+        slide.objects.every((object) => object && (object.type === "text" || object.type === "media")))) {
+        throw new Error("投影片資料格式有誤。");
+      }
+      return deck;
+    }
+  }
+  throw new Error("找不到 HTML 簡報的投影片資料。");
+}
+
+return { capture, encodeDeck, readDeck };
+})();
+
+// zip.mjs
+const makeZip = (() => {
+const crcTable = Uint32Array.from({ length: 256 }, (_, value) => {
+  for (let bit = 0; bit < 8; bit++) value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
+  return value >>> 0;
+});
+
+async function crc32(blob) {
+  let sum = 0xffffffff;
+  const reader = blob.stream().getReader();
+  try {
+    while (true) {
+      const { done, value: chunk } = await reader.read();
+      if (done) break;
+      for (const byte of chunk) sum = (sum >>> 8) ^ crcTable[(sum ^ byte) & 255];
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return (sum ^ 0xffffffff) >>> 0;
+}
+
+return async function makeZip(files, utf8) {
+  const max32 = 0xffffffff;
+  if (files.length > 65534 || files.reduce((size, [name, blob]) => size + blob.size + name.length * 8 + 76, 22) >= max32) {
+    throw new Error("ZIP 大小超過此編輯器的 4 GB 上限。請分成多份簡報。");
+  }
+
+  const pieces = [];
+  const directory = [];
+  let offset = 0;
+  let directorySize = 0;
+  const now = new Date();
+  const dosDate = ((Math.max(1980, now.getFullYear()) - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >>> 1);
+
+  for (const [name, blob] of files) {
+    const bytes = utf8.encode(name);
+    const crc = await crc32(blob);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true);
+    local.setUint16(4, 20, true);
+    local.setUint16(6, 0x0800, true);
+    local.setUint16(10, dosTime, true);
+    local.setUint16(12, dosDate, true);
+    local.setUint32(14, crc, true);
+    local.setUint32(18, blob.size, true);
+    local.setUint32(22, blob.size, true);
+    local.setUint16(26, bytes.length, true);
+    const central = new DataView(new ArrayBuffer(46));
+    central.setUint32(0, 0x02014b50, true);
+    central.setUint16(4, 20, true);
+    central.setUint16(6, 20, true);
+    central.setUint16(8, 0x0800, true);
+    central.setUint16(12, dosTime, true);
+    central.setUint16(14, dosDate, true);
+    central.setUint32(16, crc, true);
+    central.setUint32(20, blob.size, true);
+    central.setUint32(24, blob.size, true);
+    central.setUint16(28, bytes.length, true);
+    central.setUint32(42, offset, true);
+    pieces.push(local.buffer, bytes, blob);
+    directory.push(central.buffer, bytes);
+    offset += local.byteLength + bytes.length + blob.size;
+    directorySize += central.byteLength + bytes.length;
+  }
+
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true);
+  end.setUint16(8, files.length, true);
+  end.setUint16(10, files.length, true);
+  end.setUint32(12, directorySize, true);
+  end.setUint32(16, offset, true);
+  return new Blob([...pieces, ...directory, end.buffer], { type: "application/zip" });
+}
+})();
+
+// export.mjs
+const createExporter = (() => {
+function readDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("無法讀取影音檔案。"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function embeddedBlob(data) {
+  const separator = data.indexOf(",");
+  const raw = atob(data.slice(separator + 1));
+  const bytes = Uint8Array.from(raw, (character) => character.charCodeAt(0));
+  return new Blob([bytes], { type: data.slice(5, separator).split(";")[0] });
+}
+
+return function createExporter({ model, media, filenames, serialize, makeZip }) {
+  function inspect(deck) {
+    const refs = model.referencedAssets(deck);
+    let unavailable = 0;
+    let relative = 0;
+    for (const [id, asset] of refs) {
+      if (media.origin(id) === "relative") relative++;
+      if (!asset || (!media.embeddedData(id) && !media.fileFor(id, asset))) unavailable++;
+    }
+    return { count: refs.length, unavailable, relative, canLink: relative > 0 && relative === refs.length };
+  }
+
+  async function create(deck, mode, requestedName) {
+    const filename = filenames.clean(requestedName.replace(/\.(html?|zip)$/i, ""), "未命名簡報");
+    const savedDeck = { ...deck, assets: {} };
+    const files = [];
+    for (const [id, asset] of model.referencedAssets(deck)) {
+      if (!asset) throw new Error("簡報引用了一個不存在的影音檔案。");
+      const metadata = { ...asset };
+      const original = media.embeddedData(id);
+      const file = media.fileFor(id, asset);
+      if (mode === "standalone") {
+        if (!original && !file) throw new Error("找不到影音檔案 " + asset.name);
+        metadata.data = original ?? await readDataURL(file);
+      } else if (mode === "package") {
+        const bytes = file ?? (original ? embeddedBlob(original) : null);
+        if (!bytes || !filenames.relativeURL(asset.path)) throw new Error("找不到影音檔案 " + asset.name);
+        files.push([asset.path, bytes]);
+      } else if (media.origin(id) !== "relative") {
+        throw new Error("請使用 ZIP 或單一 HTML 保留新增的影音。");
+      }
+      savedDeck.assets[id] = metadata;
+    }
+    const html = serialize(savedDeck);
+    if (mode === "package") {
+      const blob = await makeZip([[filename + ".html", html], ...files], filenames.utf8);
+      return { filename: filename + ".zip", blob };
+    }
+    return { filename: filename + ".html", blob: html };
+  }
+
+  return { inspect, create };
+}
+})();
+
+// slide-view.mjs
+const createSlideView = (() => {
+return function createSlideView({ dom, media, model }) {
+  const { WIDTH, HEIGHT } = model;
+
+  function applyBox(element, object) {
+    element.style.left = object.x * WIDTH / 100 + "px";
+    element.style.top = object.y * HEIGHT / 100 + "px";
+    element.style.width = object.w * WIDTH / 100 + "px";
+    element.style.height = object.h * HEIGHT / 100 + "px";
+  }
+
+  function applyText(element, object) {
+    element.style.fontSize = object.size + "px";
+    element.style.fontWeight = object.weight;
+    element.style.textAlign = object.align;
+    element.style.color = object.color;
+  }
+
+  function displayMedia(element, object, mode, assets) {
+    const asset = assets[object.asset];
+    const label = asset?.name ?? "找不到檔案";
+    const kind = asset?.kind;
+    if (mode === "mini" && kind !== "image") {
+      const badge = dom.make("div", "mini-media");
+      badge.textContent = media.labels[kind] ?? "影音";
+      element.append(badge);
+      return;
+    }
+
+    function fallback() {
+      const badge = dom.make("div", "media-fallback");
+      badge.textContent = "無法開啟 " + label;
+      element.replaceChildren(badge);
+    }
+
+    const url = media.source(object.asset, asset);
+    if (!url || !kind) {
+      fallback();
+      return;
+    }
+    const node = dom.make(kind === "image" ? "img" : kind, "media-element");
+    if (kind === "image") {
+      node.alt = label;
+      node.draggable = false;
+    } else {
+      node.controls = mode === "show";
+      node.preload = "metadata";
+      if (kind === "video") node.playsInline = true;
+    }
+    node.addEventListener("error", fallback, { once: true });
+    node.src = url;
+    element.append(node);
+    if (mode === "edit" && kind === "audio") {
+      const badge = dom.make("div", "media-fallback");
+      badge.textContent = "音訊 · " + label;
+      element.append(badge);
+    }
+  }
+
+  function highlight(surface, objectId) {
+    for (const element of surface.querySelectorAll(".slide-object")) {
+      const selected = element.dataset.id === objectId;
+      element.classList.toggle("selected", selected);
+      const handle = element.querySelector(".resize-handle");
+      if (selected && !handle) element.append(dom.make("span", "resize-handle"));
+      if (!selected) handle?.remove();
+    }
+  }
+
+  function draw(surface, slide, assets, mode, objectId = null) {
+    surface.classList.toggle("editing", mode === "edit");
+    surface.dataset.pattern = slide.pattern;
+    surface.style.backgroundColor = slide.color;
+    const elements = slide.objects.map((object) => {
+      const element = dom.make("div", "slide-object " + (object.type === "text" ? "slide-text" : "slide-media"));
+      applyBox(element, object);
+      if (object.type === "text") {
+        applyText(element, object);
+        element.textContent = object.text;
+      } else {
+        displayMedia(element, object, mode, assets);
+      }
+      if (mode === "edit") element.dataset.id = object.id;
+      return element;
+    });
+    surface.replaceChildren(...elements);
+    if (mode === "edit") highlight(surface, objectId);
+  }
+
+  function scale(surface, width) {
+    surface.style.transform = "scale(" + width / WIDTH + ")";
+  }
+
+  function fit(stage, frame, surface, padding) {
+    const width = Math.max(0, Math.min(stage.clientWidth - padding, (stage.clientHeight - padding) * WIDTH / HEIGHT));
+    frame.style.width = width + "px";
+    scale(surface, width);
+  }
+
+  return { applyBox, applyText, draw, highlight, scale, fit };
+}
+})();
+
+// editor-view.mjs
+const createEditorView = (() => {
+const geometry = { objX: "x", objY: "y", objW: "w", objH: "h" };
+
+return function createEditorView({ dom, document, store, slideView, window }) {
+  const { id, make, value } = dom;
+
+  function fit() {
+    slideView.fit(id("stage"), id("frame"), id("editorSurface"), window.innerWidth < 691 ? 20 : 46);
+    for (const mini of id("slideList").querySelectorAll(".mini-frame")) {
+      slideView.scale(mini.firstElementChild, mini.clientWidth);
+    }
+  }
+
+  function drawEditor() {
+    slideView.draw(id("editorSurface"), store.slide(), store.deck.assets, "edit", store.objectId);
+  }
+
+  function renderList() {
+    const list = id("slideList");
+    const previousScroll = [list.scrollLeft, list.scrollTop];
+    const rows = store.deck.slides.map((slide, index) => {
+      const row = make("li");
+      const button = make("button", "slide-item");
+      button.dataset.slide = slide.id;
+      button.setAttribute("aria-current", String(slide.id === store.slideId));
+      const mini = make("div", "mini-frame");
+      mini.setAttribute("aria-hidden", "true");
+      const surface = make("div", "slide-surface");
+      slideView.draw(surface, slide, store.deck.assets, "mini");
+      mini.append(surface);
+      const caption = make("span", "slide-caption");
+      const counter = make("span", "slide-index");
+      counter.textContent = String(index + 1).padStart(2, "0");
+      const name = make("span", "slide-name");
+      name.textContent = slide.name || "未命名投影片";
+      caption.append(counter, name);
+      button.append(mini, caption);
+      row.append(button);
+      return row;
+    });
+    list.replaceChildren(...rows);
+    list.scrollTo(...previousScroll);
+    fit();
+  }
+
+  function currentMini() {
+    return id("slideList").querySelector('[aria-current="true"]');
+  }
+
+  function refreshMini() {
+    const active = currentMini();
+    if (!active) return;
+    active.querySelector(".slide-name").textContent = store.slide().name || "未命名投影片";
+    slideView.draw(active.querySelector(".slide-surface"), store.slide(), store.deck.assets, "mini");
+  }
+
+  function syncStatus() {
+    const index = store.index();
+    const count = store.deck.slides.length;
+    id("pageCount").textContent = String(count);
+    id("slidePosition").textContent = (index + 1) + " / " + count;
+    id("slidePosition").hidden = !store.deck.presentation.showEditorPageNumber;
+    id("editStatus").textContent = store.isDirty ? "有未儲存的變更" : "雙擊文字可直接編輯";
+    for (const setting of ["showPageNumber", "showEditorPageNumber"]) {
+      id(setting).checked = store.deck.presentation[setting];
+    }
+    id("undo").disabled = !store.canUndo;
+    id("redo").disabled = !store.canRedo;
+    id("slideUp").disabled = index <= 0;
+    id("slideDown").disabled = index >= count - 1;
+    id("removeSlide").disabled = count <= 1;
+  }
+
+  function syncGeometry(object) {
+    for (const [name, key] of Object.entries(geometry)) value(name, Math.round(object[key] * 10) / 10);
+  }
+
+  function syncInspector() {
+    const slide = store.slide();
+    const object = store.object();
+    value("slideName", slide.name);
+    value("slideColor", slide.color);
+    value("slidePattern", slide.pattern);
+    id("objectHint").hidden = Boolean(object);
+    id("objectFields").hidden = !object;
+    id("removeObject").hidden = !object;
+    if (!object) return;
+
+    const isText = object.type === "text";
+    id("textFields").hidden = !isText;
+    id("mediaFields").hidden = isText;
+    if (isText) {
+      value("objectText", object.text);
+      value("fontSize", object.size);
+      value("fontWeight", String(object.weight));
+      value("fontColor", object.color);
+      value("alignment", object.align);
+    } else {
+      id("mediaName").textContent = store.deck.assets[object.asset]?.name ?? "找不到檔案";
+    }
+    syncGeometry(object);
+    id("layerBack").disabled = slide.objects[0] === object;
+    id("layerFront").disabled = slide.objects.at(-1) === object;
+  }
+
+  function syncTitle() {
+    value("deckTitle", store.deck.title);
+    document.title = (store.deck.title || "未命名簡報") + " · HTML 簡報";
+  }
+
+  function refreshSlide() {
+    drawEditor();
+    refreshMini();
+  }
+
+  function render() {
+    syncTitle();
+    renderList();
+    drawEditor();
+    syncInspector();
+    syncStatus();
+  }
+
+  function highlight() {
+    slideView.highlight(id("editorSurface"), store.objectId);
+    syncInspector();
+  }
+
+  return {
+    fit, render, refreshSlide, refreshMini, syncStatus, syncTitle, syncGeometry, syncInspector, highlight,
+    geometry, revealSlide: () => currentMini()?.scrollIntoView({ block: "nearest", inline: "nearest" }),
+  };
+}
+})();
+
+// edit-actions.mjs
+const createEditActions = (() => {
+return function createEditActions({ store, model, media }) {
+  function insertSlide(slide) {
+    const index = store.index() + 1;
+    store.edit((state) => {
+      state.deck.slides.splice(index, 0, slide);
+      state.slideId = slide.id;
+      state.objectId = null;
+    });
+  }
+
+  function moveSlide(direction) {
+    const from = store.index();
+    const to = from + direction;
+    if (to < 0 || to >= store.deck.slides.length) return;
+    store.edit(({ deck }) => deck.slides.splice(to, 0, deck.slides.splice(from, 1)[0]));
+  }
+
+  function duplicateSlide() {
+    const slide = structuredClone(store.slide());
+    slide.id = model.makeId();
+    slide.name = (slide.name + "（副本）").slice(0, 100);
+    for (const object of slide.objects) object.id = model.makeId();
+    insertSlide(slide);
+  }
+
+  function removeSlide() {
+    if (store.deck.slides.length <= 1) return;
+    const index = store.index();
+    store.edit((state) => {
+      const slides = state.deck.slides;
+      slides.splice(index, 1);
+      state.slideId = slides[Math.min(index, slides.length - 1)].id;
+      state.objectId = null;
+    });
+  }
+
+  function addText() {
+    const object = model.textObject("輸入文字", [19, 35, 63, 22], 50);
+    store.edit((state) => {
+      store.slide().objects.push(object);
+      state.objectId = object.id;
+    });
+    return object;
+  }
+
+  function removeObject() {
+    if (!store.object()) return;
+    store.edit((state) => {
+      const slide = store.slide();
+      slide.objects = slide.objects.filter((object) => object.id !== state.objectId);
+      state.objectId = null;
+    });
+  }
+
+  function moveLayer(toFront) {
+    const object = store.object();
+    if (!object) return;
+    const objects = store.slide().objects;
+    const index = objects.indexOf(object);
+    const target = toFront ? objects.length - 1 : 0;
+    if (index === target) return;
+    store.edit(() => {
+      objects.splice(index, 1);
+      objects.splice(target, 0, object);
+    });
+  }
+
+  function addMedia(files) {
+    const additions = Array.from(files, media.prepare).filter(Boolean);
+    if (additions.length === 0) return 0;
+    const slide = store.slide();
+    const placement = slide.objects.some((object) => object.type === "media") ? undefined : slide.mediaBox;
+    store.edit((state) => {
+      additions.forEach((item, index) => {
+        media.remember(item);
+        state.deck.assets[item.id] = item.asset;
+        const object = model.mediaObject(item.id, item.asset.kind, index, index === 0 ? placement : undefined);
+        slide.objects.push(object);
+        state.objectId = object.id;
+      });
+    });
+    return additions.length;
+  }
+
+  function replaceMedia(file) {
+    const object = store.object();
+    if (!file || object?.type !== "media") return null;
+    const item = media.prepare(file);
+    if (!item) return false;
+    store.edit(({ deck }) => {
+      media.remember(item);
+      deck.assets[item.id] = item.asset;
+      object.asset = item.id;
+    });
+    return true;
+  }
+
+  return {
+    addSlide: (template) => insertSlide(model.slideFromTemplate(template)),
+    moveSlide, duplicateSlide, removeSlide, addText, removeObject, moveLayer, addMedia, replaceMedia,
+  };
+}
+})();
+
+// canvas-input.mjs
+const bindCanvas = (() => {
+return function bindCanvas({ dom, window, store, model, view, slideView }) {
+  const surface = dom.id("editorSurface");
+  let inline = null;
+  let gesture = null;
+
+  function closeInline(commit) {
+    if (!inline) return;
+    const { field, object } = inline;
+    inline = null;
+    if (commit && object.text !== field.value) {
+      store.edit(() => { object.text = field.value; });
+    }
+    field.remove();
+    view.refreshSlide();
+    view.syncInspector();
+    view.syncStatus();
+  }
+
+  function openInline(object) {
+    if (object?.type !== "text") return;
+    closeInline(true);
+    const field = dom.make("textarea", "inline-editor");
+    field.setAttribute("aria-label", "直接編輯文字");
+    field.value = object.text;
+    slideView.applyBox(field, object);
+    slideView.applyText(field, object);
+    field.style.removeProperty("color");
+    inline = { field, object };
+    surface.append(field);
+    field.focus();
+    field.select();
+    field.addEventListener("blur", () => closeInline(true), { once: true });
+    field.addEventListener("keydown", (event) => {
+      if (event.isComposing) return;
+      if (event.key === "Escape" || (event.key === "Enter" && (event.ctrlKey || event.metaKey))) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeInline(event.key !== "Escape");
+      }
+    });
+  }
+
+  function selectFrom(target) {
+    const id = target.closest(".slide-object")?.dataset.id ?? null;
+    if (store.selectObject(id)) view.highlight();
+  }
+
+  function pointerDown(event) {
+    if (event.button !== 0 || !event.isPrimary || event.target.closest("textarea")) return;
+    closeInline(true);
+    selectFrom(event.target);
+    const object = store.object();
+    const rect = surface.getBoundingClientRect();
+    if (!object || !rect.width || !rect.height) return;
+    gesture = {
+      pointerId: event.pointerId, x: event.clientX, y: event.clientY, rect,
+      object, original: { ...object }, resize: event.target.classList.contains("resize-handle"), active: false,
+    };
+  }
+
+  function pointerMove(event) {
+    if (!gesture || event.pointerId !== gesture.pointerId || gesture.object !== store.object()) return;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    if (!gesture.active && Math.hypot(dx, dy) < 4) return;
+    gesture.active = true;
+    const object = gesture.object;
+    const keys = gesture.resize ? ["w", "h"] : ["x", "y"];
+    const units = [dx / gesture.rect.width * 100, dy / gesture.rect.height * 100];
+    store.edit(() => {
+      keys.forEach((key, index) => {
+        object[key] = model.boxValue(object, key, gesture.original[key] + units[index]);
+      });
+    }, gesture);
+    const element = surface.querySelector(".slide-object.selected");
+    if (element) slideView.applyBox(element, object);
+    view.syncGeometry(object);
+    view.syncStatus();
+  }
+
+  function pointerEnd(event) {
+    if (!gesture || event.pointerId !== gesture.pointerId) return;
+    if (gesture.active) {
+      store.finishGroup();
+      view.refreshMini();
+    }
+    gesture = null;
+  }
+
+  surface.addEventListener("pointerdown", pointerDown);
+  surface.addEventListener("dblclick", (event) => {
+    if (event.target.closest("textarea")) return;
+    selectFrom(event.target);
+    openInline(store.object());
+  });
+  window.addEventListener("pointermove", pointerMove);
+  window.addEventListener("pointerup", pointerEnd);
+  window.addEventListener("pointercancel", pointerEnd);
+
+  return { openInline, closeInline, hasInline: () => inline !== null };
+}
+})();
+
+// editor-input.mjs
+const bindEditor = (() => {
+const asNumber = (convert) => (value, object) => value === "" ? undefined : convert(Number(value), object);
+
+return function bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, toast, refreshImportedMedia }) {
+  const { id, on } = dom;
+
+  function perform(action, reveal = false) {
+    canvas.closeInline(true);
+    action();
+    view.render();
+    refreshImportedMedia();
+    if (reveal) view.revealSlide();
+  }
+
+  function bindField(name, target, key, convert = (value) => value) {
+    on(name, "input", (event) => {
+      const item = target();
+      if (!item) return;
+      const value = convert(event.target.value, item);
+      if (value === undefined || value === item[key]) return;
+      store.edit(() => { item[key] = value; }, event.target);
+      if (name === "deckTitle") view.syncTitle();
+      else view.refreshSlide();
+      view.syncStatus();
+    });
+    on(name, "blur", () => {
+      store.finishGroup();
+      view.syncInspector();
+    });
+  }
+
+  function undo(redo) {
+    perform(redo ? store.redo : store.undo);
+  }
+
+  on("slideList", "click", (event) => {
+    const button = event.target.closest("[data-slide]");
+    if (button && button.dataset.slide !== store.slideId) {
+      perform(() => store.selectSlide(button.dataset.slide), true);
+    }
+  });
+  on("newSlide", "click", templatePicker.open);
+  on("addDialog", "click", (event) => {
+    const button = event.target.closest("[data-layout]");
+    const template = templatePicker.get(button?.dataset.layout);
+    if (!template) return;
+    id("addDialog").close();
+    perform(() => actions.addSlide(template), true);
+  });
+  for (const setting of ["showPageNumber", "showEditorPageNumber"]) {
+    on(setting, "change", (event) => {
+      store.edit(({ deck }) => { deck.presentation[setting] = event.target.checked; });
+      view.syncStatus();
+    });
+  }
+  on("slideUp", "click", () => perform(() => actions.moveSlide(-1), true));
+  on("slideDown", "click", () => perform(() => actions.moveSlide(1), true));
+  on("duplicateSlide", "click", () => perform(actions.duplicateSlide, true));
+  on("removeSlide", "click", () => perform(actions.removeSlide, true));
+  on("undo", "click", () => undo(false));
+  on("redo", "click", () => undo(true));
+  on("addText", "click", () => {
+    canvas.closeInline(true);
+    const object = actions.addText();
+    view.render();
+    canvas.openInline(object);
+  });
+  on("addMedia", "click", () => id("mediaFiles").click());
+  on("mediaFiles", "change", (event) => {
+    const files = event.target.files;
+    const count = actions.addMedia(files);
+    if (count === 0) toast("請選取圖片、影片或音訊。");
+    else if (count < files.length) toast("已加入支援的圖片與影音。");
+    event.target.value = "";
+    if (count > 0) view.render();
+  });
+  on("replaceMedia", "click", () => id("replacementFile").click());
+  on("replacementFile", "change", (event) => {
+    const result = actions.replaceMedia(event.target.files[0]);
+    if (result === false) toast("請選取圖片、影片或音訊。");
+    if (result) {
+      view.render();
+      refreshImportedMedia();
+    }
+    event.target.value = "";
+  });
+  on("removeObject", "click", () => perform(actions.removeObject));
+  on("layerBack", "click", () => perform(() => actions.moveLayer(false)));
+  on("layerFront", "click", () => perform(() => actions.moveLayer(true)));
+
+  bindField("deckTitle", () => store.deck, "title");
+  bindField("slideName", store.slide, "name");
+  bindField("slideColor", store.slide, "color");
+  bindField("slidePattern", store.slide, "pattern");
+  bindField("objectText", store.object, "text");
+  bindField("fontSize", store.object, "size", asNumber((value) => model.clamp(value, 8, 180)));
+  bindField("fontWeight", store.object, "weight", Number);
+  bindField("fontColor", store.object, "color");
+  bindField("alignment", store.object, "align");
+  for (const [name, key] of Object.entries(view.geometry)) {
+    bindField(name, store.object, key, asNumber((value, item) => model.boxValue(item, key, value)));
+  }
+
+  window.addEventListener("beforeunload", (event) => {
+    if (!store.isDirty && !canvas.hasInline()) return;
+    event.preventDefault();
+    event.returnValue = true;
+  });
+
+  function keydown(event) {
+    if (event.target.closest("input, textarea, select")) return;
+    const key = event.key.toLowerCase();
+    if ((event.ctrlKey || event.metaKey) && (key === "z" || key === "y")) {
+      event.preventDefault();
+      undo(key === "y" || event.shiftKey);
+    }
+    if (key === "delete" && store.object()) {
+      event.preventDefault();
+      perform(actions.removeObject);
+    }
+  }
+
+  return { keydown };
+}
+})();
+
+// save-dialog.mjs
+const bindSaveDialog = (() => {
+return function bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, onAttach }) {
+  const { id, on } = dom;
+  let saving = false;
+
+  function updateOptions() {
+    const { count, unavailable, relative, canLink } = exporter.inspect(store.deck);
+    const pages = store.deck.slides.length;
+    id("saveSummary").textContent = count
+      ? pages + " 張投影片，" + count + " 個影音檔案。 ZIP 解壓縮後即可離線開啟。"
+      : pages + " 張投影片。 可直接下載 HTML。";
+    id("sourceTools").hidden = relative === 0;
+    id("sourceSummary").textContent = unavailable
+      ? "要重新打包原影音，請選取同時包含原 HTML 與 media 資料夾的資料夾。"
+      : "原影音檔案已就緒。";
+    id("savePackage").hidden = count === 0;
+    id("savePackage").disabled = saving || unavailable > 0;
+    id("saveStandalone").disabled = saving || unavailable > 0;
+    id("saveLinked").hidden = !canLink;
+    id("saveLinked").disabled = saving;
+    id("saveStandalone").classList.toggle("primary", count === 0);
+    id("pickFolder").disabled = saving;
+  }
+
+  function open() {
+    canvas.closeInline(true);
+    id("saveName").value = store.deck.title || "未命名簡報";
+    id("saveMessage").textContent = "";
+    updateOptions();
+    id("saveDialog").showModal();
+  }
+
+  function download({ blob, filename }) {
+    const url = urls.createObjectURL(blob);
+    const link = dom.make("a");
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => urls.revokeObjectURL(url), 60000);
+  }
+
+  async function save(mode) {
+    if (saving) return;
+    const revision = store.revision;
+    const deck = structuredClone(store.deck);
+    saving = true;
+    id("saveMessage").textContent = "正在準備下載…";
+    updateOptions();
+    try {
+      download(await exporter.create(deck, mode, id("saveName").value));
+      store.markSaved(revision);
+      view.syncStatus();
+      id("saveDialog").close();
+      toast(mode === "linked" ? "已開始下載，請將 HTML 放回原本的 media 資料夾旁。" : "已開始下載。");
+    } catch (error) {
+      id("saveMessage").textContent = error instanceof RangeError
+        ? "影音太大，無法製作這個檔案。請改用 ZIP 或拆成多份簡報。"
+        : error.message || "另存失敗。";
+    } finally {
+      saving = false;
+      updateOptions();
+    }
+  }
+
+  on("save", "click", open);
+  on("savePackage", "click", () => save("package"));
+  on("saveStandalone", "click", () => save("standalone"));
+  on("saveLinked", "click", () => save("linked"));
+  on("pickFolder", "click", () => id("sourceFolder").click());
+  on("sourceFolder", "change", (event) => {
+    const restored = media.attachFolder(event.target.files, model.referencedAssets(store.deck));
+    event.target.value = "";
+    updateOptions();
+    view.render();
+    onAttach();
+    id("saveMessage").textContent = restored
+      ? "已找到 " + restored + " 個原影音檔案。"
+      : "選取的資料夾沒有這份簡報的影音。";
+  });
+  for (const event of ["cancel", "submit"]) {
+    on("saveDialog", event, (action) => { if (saving) action.preventDefault(); });
+  }
+
+  return { open };
+}
+})();
+
+// open-deck.mjs
+const bindOpenDeck = (() => {
+return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast }) {
+  const { id, on } = dom;
+  let imported = false;
+  let opening = false;
+
+  function refreshMediaNotice() {
+    const missing = imported ? model.referencedAssets(store.deck).filter(([id, asset]) =>
+      media.origin(id) === "relative" && !media.fileFor(id, asset)).length : 0;
+    id("importMediaNotice").hidden = missing === 0;
+    id("importMediaMessage").textContent = missing
+      ? "請選取原 HTML 所在的資料夾，連結 " + missing + " 個外部影音檔。"
+      : "";
+    view.fit();
+  }
+
+  on("openDeck", "click", () => id("deckFile").click());
+  on("deckFile", "change", async (event) => {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file || opening) return;
+    opening = true;
+    try {
+      const { deck, embedded } = model.openDeck(htmlFormat.readDeck(await file.text()));
+      canvas.closeInline(true);
+      if (store.isDirty && !window.confirm("目前簡報有未儲存的變更。要改開「" + file.name + "」嗎？")) return;
+      media.replaceDeck(embedded);
+      store.replaceDeck(deck);
+      imported = true;
+      view.render();
+      refreshMediaNotice();
+      toast("已開啟「" + (deck.title || file.name) + "」，可用新版功能繼續編輯。");
+    } catch {
+      toast("無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。");
+    } finally {
+      opening = false;
+    }
+  });
+
+  on("chooseImportedFolder", "click", () => id("importedFolder").click());
+  on("importedFolder", "change", (event) => {
+    const restored = media.attachFolder(event.target.files, model.referencedAssets(store.deck));
+    event.target.value = "";
+    view.render();
+    refreshMediaNotice();
+    toast(restored ? "已連結 " + restored + " 個影音檔。" : "此資料夾沒有這份簡報的影音檔。");
+  });
+
+  return { refreshMediaNotice };
+}
+})();
+
+// playback.mjs
+const bindPlayback = (() => {
+const CONTROL_DURATION = 3000;
+const CONTROL_EDGE_HEIGHT = 72;
+
+return function bindPlayback({ dom, document, window, store, model, slideView, canvas, toast }) {
+  const { id, on } = dom;
+  const show = id("show");
+  const bar = id("showBar");
+  let index = 0;
+  let controlTimer;
+  const active = () => !show.hidden;
+
+  function hideControls() {
+    window.clearTimeout(controlTimer);
+    if (bar.contains(document.activeElement)) show.focus({ preventScroll: true });
+    bar.hidden = true;
+  }
+
+  function showControls() {
+    if (!active()) return;
+    bar.hidden = false;
+    window.clearTimeout(controlTimer);
+    controlTimer = window.setTimeout(hideControls, CONTROL_DURATION);
+  }
+
+  function revealAtBottom(event) {
+    const bottom = show.getBoundingClientRect().bottom;
+    if (event.clientY >= bottom - CONTROL_EDGE_HEIGHT) showControls();
+  }
+
+  function fit() {
+    if (active()) slideView.fit(id("showStage"), id("showFrame"), id("showSurface"), 0);
+  }
+
+  function draw() {
+    const { slides, assets } = store.deck;
+    slideView.draw(id("showSurface"), slides[index], assets, "show");
+    const position = id("showPosition");
+    position.hidden = !store.deck.presentation.showPageNumber;
+    position.textContent = (index + 1) + " / " + slides.length;
+    id("prevShow").disabled = index <= 0;
+    id("nextShow").disabled = index >= slides.length - 1;
+    fit();
+  }
+
+  function start(from) {
+    canvas.closeInline(true);
+    index = from;
+    id("workspace").inert = true;
+    document.querySelector(".app-header").inert = true;
+    show.hidden = false;
+    draw();
+    show.focus({ preventScroll: true });
+    showControls();
+  }
+
+  function stop() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    hideControls();
+    show.hidden = true;
+    id("showSurface").replaceChildren();
+    id("workspace").inert = false;
+    document.querySelector(".app-header").inert = false;
+    id("play").focus();
+  }
+
+  function advance(target) {
+    const next = model.clamp(target, 0, store.deck.slides.length - 1);
+    if (next === index) return;
+    index = next;
+    draw();
+    showControls();
+  }
+
+  on("show", "pointermove", revealAtBottom);
+  on("show", "pointerdown", revealAtBottom);
+  on("showBar", "focusin", showControls);
+  on("play", "click", () => start(store.index()));
+  on("prevShow", "click", () => advance(index - 1));
+  on("nextShow", "click", () => advance(index + 1));
+  on("exitShow", "click", stop);
+  on("fullscreen", "click", async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await show.requestFullscreen();
+    } catch {
+      toast("瀏覽器目前無法進入全螢幕。");
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    id("fullscreen").textContent = document.fullscreenElement ? "退出全螢幕" : "全螢幕";
+    fit();
+    showControls();
+  });
+
+  function keydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      stop();
+      return;
+    }
+    if (event.key === "Tab" && bar.hidden) showControls();
+    if (event.target.closest("video, audio")) return;
+    if (event.key === " " && event.target.closest("button")) return;
+    const targets = {
+      ArrowRight: index + 1, ArrowLeft: index - 1,
+      PageDown: index + 1, PageUp: index - 1,
+      " ": index + 1, Home: 0, End: store.deck.slides.length - 1,
+    };
+    if (!Object.hasOwn(targets, event.key)) return;
+    event.preventDefault();
+    advance(targets[event.key]);
+  }
+
+  return { active, start, fit, keydown };
+}
+})();
+
+// template-picker.mjs
+const createTemplatePicker = (() => {
+return function createTemplatePicker({ dom, window, slideView, templates, model }) {
+  const dialog = dom.id("addDialog");
+  const options = dom.id("templateOptions");
+  const catalog = new Map(templates.map((template) => [template.id, template]));
+  const previews = [];
+
+  function fit() {
+    for (const [frame, surface] of previews) slideView.scale(surface, frame.clientWidth);
+  }
+
+  function tile(template) {
+    const button = dom.make("button", "button template-option");
+    button.type = "button";
+    button.dataset.layout = template.id;
+
+    const frame = dom.make("div", "template-preview");
+    frame.setAttribute("aria-hidden", "true");
+    const surface = dom.make("div", "slide-surface");
+    slideView.draw(surface, model.slideFromTemplate(template), {}, "mini");
+    if (template.mediaBox) {
+      const placeholder = dom.make("div", "slide-object template-media-preview");
+      const [x, y, w, h] = template.mediaBox;
+      slideView.applyBox(placeholder, { x, y, w, h });
+      placeholder.textContent = "圖片／影音";
+      surface.append(placeholder);
+    }
+    frame.append(surface);
+    previews.push([frame, surface]);
+
+    const label = dom.make("strong");
+    label.textContent = template.label;
+    const description = dom.make("span");
+    description.textContent = template.description;
+    button.append(frame, label, description);
+    return button;
+  }
+
+  function open() {
+    if (previews.length === 0) options.replaceChildren(...templates.map(tile));
+    dialog.showModal();
+    fit();
+  }
+
+  const resize = new window.ResizeObserver(fit);
+  resize.observe(options);
+  return { open, get: (id) => catalog.get(id) };
+}
+})();
+
+// main.mjs
+const start = (() => {
+return function start({ window, document, modules }) {
+  const {
+    model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter,
+    createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, slideTemplates, createTemplatePicker,
+  } = modules;
+  const dom = createDOM(document);
+  const serialize = htmlFormat.capture(document);
+  const { deck, embedded } = model.openDeck(JSON.parse(dom.id("deckData").textContent));
+  const store = createStore(deck);
+  const urls = window.URL;
+  const media = createMedia({ embedded, makeId: model.makeId, filenames, urls });
+  const exporter = createExporter({ model, media, filenames, serialize, makeZip });
+  const slideView = createSlideView({ dom, media, model });
+  const view = createEditorView({ dom, document, store, slideView, window });
+  const canvas = bindCanvas({ dom, window, store, model, view, slideView });
+  const actions = createEditActions({ store, model, media });
+  const templatePicker = createTemplatePicker({ dom, window, slideView, templates: slideTemplates, model });
+
+  let toastTimer;
+  function toast(message) {
+    const element = dom.id("toast");
+    element.textContent = message;
+    element.hidden = false;
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => { element.hidden = true; }, 3300);
+  }
+
+  const openDeck = bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast });
+  const editor = bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, toast,
+    refreshImportedMedia: openDeck.refreshMediaNotice });
+  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls,
+    onAttach: openDeck.refreshMediaNotice });
+  const playback = bindPlayback({ dom, document, window, store, model, slideView, canvas, toast });
+  window.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.isComposing) return;
+    if (playback.active()) {
+      playback.keydown(event);
+      return;
+    }
+    if (document.querySelector("dialog[open]")) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      saveDialog.open();
+      return;
+    }
+    if (event.key === "F5") {
+      event.preventDefault();
+      playback.start(event.shiftKey ? 0 : store.index());
+      return;
+    }
+    editor.keydown(event);
+  });
+
+  const observer = new window.ResizeObserver(() => {
+    view.fit();
+    playback.fit();
+  });
+  observer.observe(dom.id("stage"));
+  observer.observe(dom.id("slideList"));
+  view.render();
+}
+})();
+
+const slideTemplates = [
+  {
+    "id": "cover",
+    "label": "封面",
+    "description": "簡報標題與副標題",
+    "color": "#203831",
+    "pattern": "grid",
+    "text": [
+      {
+        "text": "簡報標題",
+        "box": [
+          7,
+          29,
+          86,
+          25
+        ],
+        "size": 94,
+        "color": "#fff6de",
+        "weight": 900
+      },
+      {
+        "text": "副標題",
+        "box": [
+          7,
+          61,
+          83,
+          17
+        ],
+        "size": 32,
+        "color": "#dfe6c9"
+      }
+    ]
+  },
+  {
+    "id": "content",
+    "label": "標題與內文",
+    "name": "內容",
+    "description": "通用內容頁",
+    "color": "#f6f2e7",
+    "text": [
+      {
+        "text": "標題",
+        "box": [
+          7,
+          12,
+          86,
+          17
+        ],
+        "size": 69,
+        "weight": 900
+      },
+      {
+        "text": "輸入內文",
+        "box": [
+          7,
+          39,
+          84,
+          46
+        ],
+        "size": 40
+      }
+    ]
+  },
+  {
+    "id": "section",
+    "label": "章節頁",
+    "description": "切換主題或段落",
+    "color": "#224238",
+    "text": [
+      {
+        "text": "章節名稱",
+        "box": [
+          9,
+          42,
+          82,
+          27
+        ],
+        "size": 104,
+        "color": "#fff4d8",
+        "weight": 900
+      },
+      {
+        "text": "輸入本節的主題",
+        "box": [
+          9.5,
+          72,
+          81,
+          13
+        ],
+        "size": 33,
+        "color": "#dce7c6"
+      }
+    ]
+  },
+  {
+    "id": "bullets",
+    "label": "重點條列",
+    "description": "條列三項重點或摘要",
+    "color": "#f3e5d6",
+    "text": [
+      {
+        "text": "重點整理",
+        "box": [
+          8,
+          12,
+          84,
+          17
+        ],
+        "size": 74,
+        "color": "#492c24",
+        "weight": 900
+      },
+      {
+        "text": "•  第一項重點\n•  第二項重點\n•  第三項重點",
+        "box": [
+          9,
+          38,
+          77,
+          50
+        ],
+        "size": 53,
+        "color": "#4f382f"
+      }
+    ]
+  },
+  {
+    "id": "columns",
+    "label": "雙欄比較",
+    "description": "並列兩個概念或方案",
+    "color": "#e8eee5",
+    "text": [
+      {
+        "text": "比較主題",
+        "box": [
+          7,
+          10,
+          86,
+          17
+        ],
+        "size": 72,
+        "weight": 900
+      },
+      {
+        "text": "左欄標題",
+        "box": [
+          7,
+          38,
+          39,
+          12
+        ],
+        "size": 45,
+        "color": "#a34127",
+        "weight": 700
+      },
+      {
+        "text": "輸入左欄內容",
+        "box": [
+          7,
+          54,
+          39,
+          35
+        ],
+        "size": 36
+      },
+      {
+        "text": "右欄標題",
+        "box": [
+          54,
+          38,
+          39,
+          12
+        ],
+        "size": 45,
+        "color": "#315744",
+        "weight": 700
+      },
+      {
+        "text": "輸入右欄內容",
+        "box": [
+          54,
+          54,
+          39,
+          35
+        ],
+        "size": 36
+      }
+    ]
+  },
+  {
+    "id": "media",
+    "label": "文字＋影音",
+    "description": "左側文字，右側留給圖片或影片",
+    "color": "#f7f1e4",
+    "mediaBox": [
+      39,
+      34,
+      54,
+      55
+    ],
+    "text": [
+      {
+        "text": "圖文或影音主題",
+        "box": [
+          7,
+          11,
+          86,
+          17
+        ],
+        "size": 67,
+        "weight": 900
+      },
+      {
+        "text": "輸入說明文字",
+        "box": [
+          7,
+          39,
+          29,
+          50
+        ],
+        "size": 38
+      }
+    ]
+  },
+  {
+    "id": "steps",
+    "label": "操作步驟",
+    "description": "三個並排的流程步驟",
+    "color": "#e9e9de",
+    "text": [
+      {
+        "text": "操作流程",
+        "box": [
+          7,
+          10,
+          86,
+          17
+        ],
+        "size": 72,
+        "weight": 900
+      },
+      {
+        "text": "1. 準備",
+        "box": [
+          7,
+          41,
+          26,
+          11
+        ],
+        "size": 45,
+        "color": "#a34127",
+        "weight": 700
+      },
+      {
+        "text": "輸入準備事項",
+        "box": [
+          7,
+          57,
+          26,
+          34
+        ],
+        "size": 31
+      },
+      {
+        "text": "2. 執行",
+        "box": [
+          37,
+          41,
+          26,
+          11
+        ],
+        "size": 45,
+        "color": "#a34127",
+        "weight": 700
+      },
+      {
+        "text": "輸入操作內容",
+        "box": [
+          37,
+          57,
+          26,
+          34
+        ],
+        "size": 31
+      },
+      {
+        "text": "3. 確認",
+        "box": [
+          67,
+          41,
+          26,
+          11
+        ],
+        "size": 45,
+        "color": "#a34127",
+        "weight": 700
+      },
+      {
+        "text": "寫下確認方式",
+        "box": [
+          67,
+          57,
+          26,
+          34
+        ],
+        "size": 31
+      }
+    ]
+  },
+  {
+    "id": "discussion",
+    "label": "提問與討論",
+    "description": "獨立展示一個討論題目",
+    "color": "#f1daca",
+    "pattern": "dots",
+    "text": [
+      {
+        "text": "討論時間",
+        "box": [
+          9,
+          22,
+          82,
+          12
+        ],
+        "size": 43,
+        "color": "#793e2d",
+        "weight": 700,
+        "align": "center"
+      },
+      {
+        "text": "你會怎麼做？",
+        "box": [
+          9,
+          39,
+          82,
+          23
+        ],
+        "size": 87,
+        "color": "#48291e",
+        "weight": 900,
+        "align": "center"
+      },
+      {
+        "text": "請說明你的想法。",
+        "box": [
+          9,
+          68,
+          82,
+          12
+        ],
+        "size": 34,
+        "color": "#664c41",
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "blank",
+    "label": "空白",
+    "name": "空白投影片",
+    "description": "自行加入物件",
+    "color": "#f6f2e7",
+    "text": []
+  }
+];
+
+start({ window, document, modules: { model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, createTemplatePicker, slideTemplates } });
+</script>
+</body>
+</html>
