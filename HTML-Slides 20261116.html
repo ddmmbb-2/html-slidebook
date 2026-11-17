@@ -650,6 +650,8 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   </div>
   <div class="save-options">
     <button class="button primary" id="savePackage" data-ui="下載 HTML＋影音 ZIP">下載 HTML＋影音 ZIP</button>
+    <button class="button" id="saveLocal" aria-describedby="localSaveHint" data-ui="覆蓋本機簡報（HTML＋媒體）">覆蓋本機簡報（HTML＋媒體）</button>
+    <p class="hint" id="localSaveHint"></p>
     <button class="button" id="saveStandalone" data-ui="下載單一 HTML">下載單一 HTML</button>
     <button class="button" id="saveLinked" data-ui="只下載 HTML（沿用原影音）">只下載 HTML（沿用原影音）</button>
   </div>
@@ -1233,6 +1235,12 @@ return function createMedia({ embedded, makeId, filenames, urls, createImage }) 
     return cachedURLs.get(id);
   }
 
+  function attachFile(id, path, file) {
+    if (cachedURLs.has(id)) urls.revokeObjectURL(cachedURLs.get(id));
+    cachedURLs.delete(id);
+    attached.set(path, file);
+  }
+
   function attachFolder(files, references) {
     const relativePaths = new Map(references.filter(([id, asset]) =>
       asset && origin(id) === "relative").map(([id, asset]) => [asset.path, id]));
@@ -1241,16 +1249,14 @@ return function createMedia({ embedded, makeId, filenames, urls, createImage }) 
       const path = file.webkitRelativePath.split("/").slice(1).join("/");
       const id = relativePaths.get(path);
       if (!id) continue;
-      if (cachedURLs.has(id)) urls.revokeObjectURL(cachedURLs.get(id));
-      cachedURLs.delete(id);
-      attached.set(path, file);
+      attachFile(id, path, file);
       restored++;
     }
     return restored;
   }
 
   return {
-    labels, prepare, canReadImage, origin, fileFor, source, attachFolder, replaceDeck,
+    labels, prepare, canReadImage, origin, fileFor, source, attachFile, attachFolder, replaceDeck,
     remember: ({ id, file }) => added.set(id, file),
     embeddedData: (id) => embedded.get(id),
   };
@@ -1407,8 +1413,7 @@ return function createExporter({ model, media, filenames, serialize, makeZip, t 
     return { count: refs.length, unavailable, relative, canLink: relative > 0 && relative === refs.length };
   }
 
-  async function create(deck, mode, requestedName) {
-    const filename = filenames.clean(requestedName.replace(/\.(html?|zip)$/i, ""), t("未命名簡報"));
+  async function prepare(deck, mode, useLocalMedia) {
     const savedDeck = { ...deck, assets: {} };
     const files = [];
     for (const [id, asset] of model.referencedAssets(deck)) {
@@ -1419,16 +1424,25 @@ return function createExporter({ model, media, filenames, serialize, makeZip, t 
       if (mode === "standalone") {
         if (!original && !file) throw new Error(t("找不到影音檔案 {name}", { name: asset.name }));
         metadata.data = original ?? await readDataURL(file, t);
-      } else if (mode === "package") {
-        const bytes = file ?? (original ? embeddedBlob(original) : null);
-        if (!bytes || !filenames.relativeURL(asset.path)) throw new Error(t("找不到影音檔案 {name}", { name: asset.name }));
-        files.push([asset.path, bytes]);
+      } else if (mode === "package" || mode === "local") {
+        if (!filenames.relativeURL(asset.path)) throw new Error(t("找不到影音檔案 {name}", { name: asset.name }));
+        const alreadyLocal = mode === "local" && media.origin(id) === "relative" && await useLocalMedia(id, asset);
+        if (!alreadyLocal) {
+          const bytes = file ?? (original ? embeddedBlob(original) : null);
+          if (!bytes) throw new Error(t("找不到影音檔案 {name}", { name: asset.name }));
+          files.push([asset.path, bytes]);
+        }
       } else if (media.origin(id) !== "relative") {
         throw new Error(t("請使用 ZIP 或單一 HTML 保留新增的影音。"));
       }
       savedDeck.assets[id] = metadata;
     }
-    const html = serialize(savedDeck);
+    return { html: serialize(savedDeck), files };
+  }
+
+  async function create(deck, mode, requestedName) {
+    const filename = filenames.clean(requestedName.replace(/\.(html?|zip)$/i, ""), t("未命名簡報"));
+    const { html, files } = await prepare(deck, mode);
     if (mode === "package") {
       const blob = await makeZip([[filename + ".html", html], ...files], filenames.utf8);
       return { filename: filename + ".zip", blob };
@@ -1436,7 +1450,71 @@ return function createExporter({ model, media, filenames, serialize, makeZip, t 
     return { filename: filename + ".html", blob: html };
   }
 
-  return { inspect, create };
+  return { inspect, create, prepare };
+}
+})();
+
+// local-save.mjs
+const createLocalSave = (() => {
+async function findFile(getHandle) {
+  try { return await getHandle(); } catch (error) {
+    if (error.name === "NotFoundError") return null;
+    throw error;
+  }
+}
+
+async function mediaHandle(root, path, create = false) {
+  const parts = path.split("/");
+  const name = parts.pop();
+  let folder = root;
+  for (const part of parts) folder = await folder.getDirectoryHandle(part, { create });
+  return folder.getFileHandle(name, { create });
+}
+
+return function createLocalSave({ window, exporter, t }) {
+  const supported = typeof window.showDirectoryPicker === "function";
+
+  async function pickFolder() {
+    try {
+      return await window.showDirectoryPicker({ id: "html-slidebook", mode: "readwrite" });
+    } catch (error) {
+      if (error.name === "AbortError") return null;
+      throw error;
+    }
+  }
+
+  async function overwrite(deck, folder, name) {
+    const target = await findFile(() => folder.getFileHandle(name));
+    if (!target) throw new Error(t("所選資料夾找不到「{name}」。請選擇原 HTML 所在的資料夾。", { name }));
+    if (!window.confirm(t("要覆蓋「{folder}」內的「{name}」，並寫入所需媒體嗎？", { folder: folder.name, name }))) return null;
+
+    const existingMedia = [];
+    const { html, files } = await exporter.prepare(deck, "local", async (id, asset) => {
+      const handle = await findFile(() => mediaHandle(folder, asset.path));
+      if (!handle) return false;
+      const file = await handle.getFile();
+      if (!file.size && asset.bytes !== 0) return false;
+      existingMedia.push({ id, path: asset.path, file });
+      return true;
+    });
+
+    // Hold the HTML write lock while saving media, then commit the HTML last.
+    const output = await target.createWritable({ mode: "exclusive" });
+    try {
+      for (const [path, blob] of files) {
+        const handle = await mediaHandle(folder, path, true);
+        await blob.stream().pipeTo(await handle.createWritable({ mode: "exclusive" }));
+      }
+      await output.write(html);
+      await output.close();
+    } catch (error) {
+      await output.abort().catch(() => {});
+      throw error;
+    }
+    return existingMedia;
+  }
+
+  return { supported, pickFolder, overwrite };
 }
 })();
 
@@ -2287,7 +2365,7 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
 
 // save-dialog.mjs
 const bindSaveDialog = (() => {
-return function bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, onAttach, t }) {
+return function bindSaveDialog({ dom, document, window, store, model, media, exporter, localSave, sourceName, canvas, view, toast, urls, onAttach, t }) {
   const { id, on } = dom;
   let saving = false;
 
@@ -2295,7 +2373,7 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     const { count, unavailable, relative, canLink } = exporter.inspect(store.deck);
     const pages = store.deck.slides.length;
     id("saveSummary").textContent = count
-      ? t("{pages} 張投影片，{count} 個影音檔案。ZIP 解壓縮後即可離線開啟。", { pages, count })
+      ? t("{pages} 張投影片，{count} 個媒體檔案。", { pages, count })
       : t("{pages} 張投影片。可直接下載 HTML。", { pages });
     id("sourceTools").hidden = relative === 0;
     id("sourceSummary").textContent = unavailable
@@ -2303,6 +2381,13 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
       : t("原影音檔案已就緒。");
     id("savePackage").hidden = count === 0;
     id("savePackage").disabled = saving || unavailable > 0;
+    const name = sourceName();
+    id("saveLocal").disabled = saving || !localSave.supported || !name;
+    id("localSaveHint").textContent = !localSave.supported
+      ? t("請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。")
+      : name
+        ? t("選擇原 HTML 所在的資料夾，沿用原檔名「{name}」。", { name })
+        : t("請先用「開啟簡報」載入要覆蓋的 HTML。");
     id("saveStandalone").disabled = saving || unavailable > 0;
     id("saveLinked").hidden = !canLink;
     id("saveLinked").disabled = saving;
@@ -2333,17 +2418,38 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     if (saving) return;
     const revision = store.revision;
     const deck = structuredClone(store.deck);
+    const local = mode === "local";
     saving = true;
-    id("saveMessage").textContent = t("正在準備下載…");
+    id("saveMessage").textContent = t(local ? "正在儲存本機簡報…" : "正在準備下載…");
     updateOptions();
     try {
-      download(await exporter.create(deck, mode, id("saveName").value));
+      let message;
+      if (local) {
+        const name = sourceName();
+        const folder = await localSave.pickFolder();
+        const existingMedia = folder && await localSave.overwrite(deck, folder, name);
+        if (!existingMedia) {
+          id("saveMessage").textContent = "";
+          return;
+        }
+        if (existingMedia.length && revision === store.revision) {
+          for (const { id, path, file } of existingMedia) media.attachFile(id, path, file);
+          view.render();
+          onAttach();
+        }
+        message = t("已覆蓋本機簡報「{name}」。", { name });
+      } else {
+        download(await exporter.create(deck, mode, id("saveName").value));
+        message = t(mode === "linked" ? "已開始下載，請將 HTML 放回原本的 media 資料夾旁。" : "已開始下載。");
+      }
       store.markSaved(revision);
       view.syncStatus();
       id("saveDialog").close();
-      toast(mode === "linked" ? t("已開始下載，請將 HTML 放回原本的 media 資料夾旁。") : t("已開始下載。"));
+      toast(message);
     } catch (error) {
-      id("saveMessage").textContent = error instanceof RangeError
+      id("saveMessage").textContent = local && error.name === "NotAllowedError"
+        ? t("請允許瀏覽器寫入簡報資料夾。")
+        : error instanceof RangeError
         ? t("影音太大，無法製作這個檔案。請改用 ZIP 或拆成多份簡報。")
         : t(error.message || "另存失敗。");
     } finally {
@@ -2354,6 +2460,7 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
 
   on("save", "click", open);
   on("savePackage", "click", () => save("package"));
+  on("saveLocal", "click", () => save("local"));
   on("saveStandalone", "click", () => save("standalone"));
   on("saveLinked", "click", () => save("linked"));
   on("pickFolder", "click", () => id("sourceFolder").click());
@@ -2379,6 +2486,10 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
 const bindOpenDeck = (() => {
 return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast, t }) {
   const { id, on } = dom;
+  let openedName = "";
+  if (window.location.protocol === "file:") {
+    try { openedName = decodeURIComponent(window.location.pathname.split("/").pop()); } catch {}
+  }
   let imported = false;
   let opening = false;
 
@@ -2404,6 +2515,7 @@ return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, can
       if (store.isDirty && !window.confirm(t("目前簡報有未儲存的變更。要改開「{name}」嗎？", { name: file.name }))) return;
       media.replaceDeck(embedded);
       store.replaceDeck(deck);
+      openedName = file.name;
       imported = true;
       view.render();
       refreshMediaNotice();
@@ -2424,7 +2536,7 @@ return function bindOpenDeck({ dom, window, store, model, media, htmlFormat, can
     toast(restored ? t("已連結 {count} 個影音檔。", { count: restored }) : t("此資料夾沒有這份簡報的影音檔。"));
   });
 
-  return { refreshMediaNotice };
+  return { refreshMediaNotice, sourceName: () => /\.html?$/i.test(openedName) ? openedName : "" };
 }
 })();
 
@@ -2725,7 +2837,7 @@ return function createSymbolPicker({ dom, t }) {
 const start = (() => {
 return function start({ window, document, modules }) {
   const {
-    model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter,
+    model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createLocalSave,
     createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, slideTemplates, createTemplatePicker, createSymbolPicker, createI18n, messages,
   } = modules;
   const dom = createDOM(document);
@@ -2737,6 +2849,7 @@ return function start({ window, document, modules }) {
   const urls = window.URL;
   const media = createMedia({ embedded, makeId: model.makeId, filenames, urls, createImage: () => dom.make("img") });
   const exporter = createExporter({ model, media, filenames, serialize, makeZip, t });
+  const localSave = createLocalSave({ window, exporter, t });
   const slideView = createSlideView({ dom, media, model, t });
   const view = createEditorView({ dom, document, store, slideView, window, model, t });
   const canvas = bindCanvas({ dom, window, store, model, view, slideView, t });
@@ -2760,8 +2873,8 @@ return function start({ window, document, modules }) {
   const openDeck = bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast, t });
   const editor = bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, symbolPicker, toast, t,
     refreshImportedMedia: openDeck.refreshMediaNotice });
-  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, t,
-    onAttach: openDeck.refreshMediaNotice });
+  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, localSave, canvas, view, toast, urls, t,
+    sourceName: openDeck.sourceName, onAttach: openDeck.refreshMediaNotice });
   const playback = bindPlayback({ dom, document, window, store, model, slideView, canvas, toast, t });
   window.addEventListener("keydown", (event) => {
     if (event.defaultPrevented || event.isComposing) return;
@@ -3315,7 +3428,7 @@ const messages = {
     "ZIP 大小超過此編輯器的 4 GB 上限。請分成多份簡報。": "The ZIP exceeds the 4 GB limit. Split the presentation into smaller files.",
     "{name}（副本）": "{name} (copy)",
     "{pages} 張投影片。可直接下載 HTML。": "Slides: {pages}. Download as HTML.",
-    "{pages} 張投影片，{count} 個影音檔案。ZIP 解壓縮後即可離線開啟。": "Slides: {pages}. Media files: {count}. Extract the ZIP to open it offline.",
+    "{pages} 張投影片，{count} 個媒體檔案。": "Slides: {pages}. Media files: {count}.",
     "•  第一項重點\n•  第二項重點\n•  第三項重點": "•  First point\n•  Second point\n•  Third point",
     "一般": "Regular",
     "三欄底板": "Three panels",
@@ -3324,6 +3437,15 @@ const messages = {
     "下一頁": "Next slide",
     "下移投影片": "Move slide down",
     "下載 HTML＋影音 ZIP": "Download HTML + media ZIP",
+    "覆蓋本機簡報（HTML＋媒體）": "Overwrite local presentation (HTML + media)",
+    "請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。": "Use a browser that can write to local folders, such as Chrome or Edge on a computer, or choose a download option.",
+    "選擇原 HTML 所在的資料夾，沿用原檔名「{name}」。": "Select the folder containing the original HTML. Its name will stay “{name}”.",
+    "請先用「開啟簡報」載入要覆蓋的 HTML。": "Use Open presentation to load the HTML you want to overwrite.",
+    "所選資料夾找不到「{name}」。請選擇原 HTML 所在的資料夾。": "“{name}” was not found in that folder. Select the folder containing the original HTML.",
+    "要覆蓋「{folder}」內的「{name}」，並寫入所需媒體嗎？": "Overwrite “{name}” in “{folder}” and save its media?",
+    "正在儲存本機簡報…": "Saving local presentation…",
+    "已覆蓋本機簡報「{name}」。": "Overwrote local presentation “{name}”.",
+    "請允許瀏覽器寫入簡報資料夾。": "Allow your browser to write to the presentation folder.",
     "下載單一 HTML": "Download single HTML file",
     "並列兩個概念或方案": "Compare two ideas or options",
     "並排呈現三個步驟": "Show three steps side by side",
@@ -3596,7 +3718,7 @@ const messages = {
     "ZIP 大小超過此編輯器的 4 GB 上限。請分成多份簡報。": "ZIP が 4 GB の上限を超えています。プレゼンを分割してください。",
     "{name}（副本）": "{name}（コピー）",
     "{pages} 張投影片。可直接下載 HTML。": "スライド {pages} 枚。HTML でダウンロードできます。",
-    "{pages} 張投影片，{count} 個影音檔案。ZIP 解壓縮後即可離線開啟。": "スライド {pages} 枚、メディア {count} 件。ZIP を展開するとオフラインで開けます。",
+    "{pages} 張投影片，{count} 個媒體檔案。": "スライド {pages} 枚、メディア {count} 件。",
     "•  第一項重點\n•  第二項重點\n•  第三項重點": "•  要点その1\n•  要点その2\n•  要点その3",
     "一般": "標準",
     "三欄底板": "3 列パネル",
@@ -3605,6 +3727,15 @@ const messages = {
     "下一頁": "次のスライド",
     "下移投影片": "スライドを下へ",
     "下載 HTML＋影音 ZIP": "HTML とメディアを ZIP で保存",
+    "覆蓋本機簡報（HTML＋媒體）": "ローカルのプレゼンを上書き（HTML＋メディア）",
+    "請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。": "PC 版の Chrome や Edge など、ローカルフォルダーへの書き込みに対応したブラウザーを使用するか、ダウンロードを選んでください。",
+    "選擇原 HTML 所在的資料夾，沿用原檔名「{name}」。": "元の HTML があるフォルダーを選んでください。ファイル名は「{name}」のままです。",
+    "請先用「開啟簡報」載入要覆蓋的 HTML。": "「プレゼンを開く」から上書きする HTML を開いてください。",
+    "所選資料夾找不到「{name}」。請選擇原 HTML 所在的資料夾。": "選んだフォルダーに「{name}」がありません。元の HTML があるフォルダーを選んでください。",
+    "要覆蓋「{folder}」內的「{name}」，並寫入所需媒體嗎？": "「{folder}」内の「{name}」を上書きし、メディアを保存しますか？",
+    "正在儲存本機簡報…": "ローカルのプレゼンを保存中…",
+    "已覆蓋本機簡報「{name}」。": "ローカルのプレゼン「{name}」を上書きしました。",
+    "請允許瀏覽器寫入簡報資料夾。": "ブラウザーにプレゼンのフォルダーへの書き込みを許可してください。",
     "下載單一 HTML": "単一 HTML を保存",
     "並列兩個概念或方案": "2 つの案を並べて比較",
     "並排呈現三個步驟": "3 つの手順を横に並べる",
@@ -3805,7 +3936,7 @@ const messages = {
   }
 };
 
-start({ window, document, modules: { model, createDOM, createI18n, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, createTemplatePicker, createSymbolPicker, slideTemplates, messages } });
+start({ window, document, modules: { model, createDOM, createI18n, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createLocalSave, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, createTemplatePicker, createSymbolPicker, slideTemplates, messages } });
 </script>
 </body>
 </html>
