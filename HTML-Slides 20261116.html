@@ -643,17 +643,17 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   <label class="field-label" for="saveName" data-ui="檔案名稱">檔案名稱</label>
   <input id="saveName" maxlength="100" placeholder="我的簡報" data-ui-placeholder="我的簡報">
   <p class="hint" id="saveSummary"></p>
-  <div id="sourceTools" class="source-tools" hidden>
-    <button class="button small" id="pickFolder" data-ui="選取原簡報的資料夾">選取原簡報的資料夾</button>
-    <input id="sourceFolder" type="file" webkitdirectory multiple hidden>
-    <p class="hint" id="sourceSummary"></p>
-  </div>
   <div class="save-options">
-    <button class="button primary" id="savePackage" data-ui="下載 HTML＋影音 ZIP">下載 HTML＋影音 ZIP</button>
     <button class="button" id="saveLocal" aria-describedby="localSaveHint" data-ui="覆蓋本機簡報（HTML＋媒體）">覆蓋本機簡報（HTML＋媒體）</button>
     <p class="hint" id="localSaveHint"></p>
+    <button class="button primary" id="savePackage" data-ui="下載 HTML＋影音 ZIP">下載 HTML＋影音 ZIP</button>
     <button class="button" id="saveStandalone" data-ui="下載單一 HTML">下載單一 HTML</button>
     <button class="button" id="saveLinked" data-ui="只下載 HTML（沿用原影音）">只下載 HTML（沿用原影音）</button>
+  </div>
+  <div id="sourceTools" class="source-tools" hidden>
+    <button class="button small" id="pickFolder" data-ui="連結原媒體以供下載">連結原媒體以供下載</button>
+    <input id="sourceFolder" type="file" webkitdirectory multiple hidden>
+    <p class="hint" id="sourceSummary"></p>
   </div>
   <p class="save-message" id="saveMessage" role="status"></p>
 </dialog>
@@ -1486,7 +1486,6 @@ return function createLocalSave({ window, exporter, t }) {
   async function overwrite(deck, folder, name) {
     const target = await findFile(() => folder.getFileHandle(name));
     if (!target) throw new Error(t("所選資料夾找不到「{name}」。請選擇原 HTML 所在的資料夾。", { name }));
-    if (!window.confirm(t("要覆蓋「{folder}」內的「{name}」，並寫入所需媒體嗎？", { folder: folder.name, name }))) return null;
 
     const existingMedia = [];
     const { html, files } = await exporter.prepare(deck, "local", async (id, asset) => {
@@ -2386,7 +2385,7 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     id("localSaveHint").textContent = !localSave.supported
       ? t("請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。")
       : name
-        ? t("選擇原 HTML 所在的資料夾，沿用原檔名「{name}」。", { name })
+        ? t("選定原 HTML 所在的資料夾後，會直接覆蓋「{name}」。", { name })
         : t("請先用「開啟簡報」載入要覆蓋的 HTML。");
     id("saveStandalone").disabled = saving || unavailable > 0;
     id("saveLinked").hidden = !canLink;
@@ -2420,24 +2419,22 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     const deck = structuredClone(store.deck);
     const local = mode === "local";
     saving = true;
-    id("saveMessage").textContent = t(local ? "正在儲存本機簡報…" : "正在準備下載…");
+    id("saveMessage").textContent = local ? "" : t("正在準備下載…");
     updateOptions();
     try {
       let message;
       if (local) {
         const name = sourceName();
         const folder = await localSave.pickFolder();
-        const existingMedia = folder && await localSave.overwrite(deck, folder, name);
-        if (!existingMedia) {
-          id("saveMessage").textContent = "";
-          return;
-        }
+        if (!folder) return;
+        id("saveMessage").textContent = t("正在儲存本機簡報…");
+        const existingMedia = await localSave.overwrite(deck, folder, name);
         if (existingMedia.length && revision === store.revision) {
           for (const { id, path, file } of existingMedia) media.attachFile(id, path, file);
           view.render();
           onAttach();
         }
-        message = t("已覆蓋本機簡報「{name}」。", { name });
+        message = t("儲存成功，已覆蓋「{name}」。", { name });
       } else {
         download(await exporter.create(deck, mode, id("saveName").value));
         message = t(mode === "linked" ? "已開始下載，請將 HTML 放回原本的 media 資料夾旁。" : "已開始下載。");
@@ -3439,12 +3436,11 @@ const messages = {
     "下載 HTML＋影音 ZIP": "Download HTML + media ZIP",
     "覆蓋本機簡報（HTML＋媒體）": "Overwrite local presentation (HTML + media)",
     "請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。": "Use a browser that can write to local folders, such as Chrome or Edge on a computer, or choose a download option.",
-    "選擇原 HTML 所在的資料夾，沿用原檔名「{name}」。": "Select the folder containing the original HTML. Its name will stay “{name}”.",
+    "選定原 HTML 所在的資料夾後，會直接覆蓋「{name}」。": "Select the folder containing the original HTML to overwrite “{name}” immediately.",
     "請先用「開啟簡報」載入要覆蓋的 HTML。": "Use Open presentation to load the HTML you want to overwrite.",
     "所選資料夾找不到「{name}」。請選擇原 HTML 所在的資料夾。": "“{name}” was not found in that folder. Select the folder containing the original HTML.",
-    "要覆蓋「{folder}」內的「{name}」，並寫入所需媒體嗎？": "Overwrite “{name}” in “{folder}” and save its media?",
     "正在儲存本機簡報…": "Saving local presentation…",
-    "已覆蓋本機簡報「{name}」。": "Overwrote local presentation “{name}”.",
+    "儲存成功，已覆蓋「{name}」。": "Saved successfully. Overwrote “{name}”.",
     "請允許瀏覽器寫入簡報資料夾。": "Allow your browser to write to the presentation folder.",
     "下載單一 HTML": "Download single HTML file",
     "並列兩個概念或方案": "Compare two ideas or options",
@@ -3584,7 +3580,7 @@ const messages = {
     "退出全螢幕": "Exit fullscreen",
     "透明背景": "Transparent background",
     "適合摘要與結論": "For summaries and conclusions",
-    "選取原簡報的資料夾": "Select original presentation folder",
+    "連結原媒體以供下載": "Link original media for download",
     "選取的資料夾沒有這份簡報的影音。": "No media for this presentation in the selected folder.",
     "選取舊簡報資料夾": "Select original folder",
     "選擇投影片範本": "Choose a slide template",
@@ -3729,12 +3725,11 @@ const messages = {
     "下載 HTML＋影音 ZIP": "HTML とメディアを ZIP で保存",
     "覆蓋本機簡報（HTML＋媒體）": "ローカルのプレゼンを上書き（HTML＋メディア）",
     "請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。": "PC 版の Chrome や Edge など、ローカルフォルダーへの書き込みに対応したブラウザーを使用するか、ダウンロードを選んでください。",
-    "選擇原 HTML 所在的資料夾，沿用原檔名「{name}」。": "元の HTML があるフォルダーを選んでください。ファイル名は「{name}」のままです。",
+    "選定原 HTML 所在的資料夾後，會直接覆蓋「{name}」。": "元の HTML があるフォルダーを選ぶと、「{name}」がすぐに上書きされます。",
     "請先用「開啟簡報」載入要覆蓋的 HTML。": "「プレゼンを開く」から上書きする HTML を開いてください。",
     "所選資料夾找不到「{name}」。請選擇原 HTML 所在的資料夾。": "選んだフォルダーに「{name}」がありません。元の HTML があるフォルダーを選んでください。",
-    "要覆蓋「{folder}」內的「{name}」，並寫入所需媒體嗎？": "「{folder}」内の「{name}」を上書きし、メディアを保存しますか？",
     "正在儲存本機簡報…": "ローカルのプレゼンを保存中…",
-    "已覆蓋本機簡報「{name}」。": "ローカルのプレゼン「{name}」を上書きしました。",
+    "儲存成功，已覆蓋「{name}」。": "保存しました。「{name}」を上書きしました。",
     "請允許瀏覽器寫入簡報資料夾。": "ブラウザーにプレゼンのフォルダーへの書き込みを許可してください。",
     "下載單一 HTML": "単一 HTML を保存",
     "並列兩個概念或方案": "2 つの案を並べて比較",
@@ -3874,7 +3869,7 @@ const messages = {
     "退出全螢幕": "全画面を終了",
     "透明背景": "透明な背景",
     "適合摘要與結論": "まとめや結論に",
-    "選取原簡報的資料夾": "元のプレゼンフォルダを選択",
+    "連結原媒體以供下載": "ダウンロード用に元のメディアをリンク",
     "選取的資料夾沒有這份簡報的影音。": "選択したフォルダに該当するメディアがありません。",
     "選取舊簡報資料夾": "元のフォルダを選択",
     "選擇投影片範本": "テンプレートを選択",
