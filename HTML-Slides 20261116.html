@@ -257,6 +257,7 @@ input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; margin: 0; ac
 }
 .template-option span { color: var(--muted); font-size: 12px; font-weight: 400; }
 .save-options { display: grid; gap: 7px; }
+.local-drop { padding: 8px; border: 1px dashed var(--accent); border-radius: 6px; text-align: center; }
 @media (max-width: 560px) {
   .layout-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -646,6 +647,8 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   <div class="save-options">
     <button class="button" id="saveLocal" aria-describedby="localSaveHint" data-ui="覆蓋本機簡報（HTML＋媒體）">覆蓋本機簡報（HTML＋媒體）</button>
     <p class="hint" id="localSaveHint"></p>
+    <p class="hint local-drop" id="localDropZone" hidden data-ui="或把原簡報資料夾拖到這裡">或把原簡報資料夾拖到這裡</p>
+    <button class="button" id="saveGrantedFolder" hidden data-ui="允許寫入並儲存">允許寫入並儲存</button>
     <button class="button primary" id="savePackage" data-ui="下載 HTML＋影音 ZIP">下載 HTML＋影音 ZIP</button>
     <button class="button" id="saveStandalone" data-ui="下載單一 HTML">下載單一 HTML</button>
     <button class="button" id="saveLinked" data-ui="只下載 HTML（沿用原影音）">只下載 HTML（沿用原影音）</button>
@@ -1473,14 +1476,41 @@ async function mediaHandle(root, path, create = false) {
 
 return function createLocalSave({ window, exporter, t }) {
   const supported = typeof window.showDirectoryPicker === "function";
+  const supportsDrop = typeof window.DataTransferItem?.prototype.getAsFileSystemHandle === "function" &&
+    typeof window.FileSystemHandle?.prototype.requestPermission === "function";
+  const writeAccess = { mode: "readwrite" };
 
   async function pickFolder() {
     try {
-      return await window.showDirectoryPicker({ id: "html-slidebook", mode: "readwrite" });
+      return await window.showDirectoryPicker({ ...writeAccess, id: "html-slidebook" });
     } catch (error) {
-      if (error.name === "AbortError") return null;
+      if (error.name === "AbortError") {
+        const message = supportsDrop
+          ? "未取得資料夾的存取權。若已選定，請改將原簡報資料夾拖到上方拖放區。"
+          : "未取得資料夾的存取權。請重新選取原 HTML 所在的資料夾。";
+        throw new Error(t(message));
+      }
       throw error;
     }
+  }
+
+  async function folderFromDrop(items) {
+    const files = Array.from(items).filter((item) => item.kind === "file");
+    // The dropped handle must be requested before the drop event handler yields.
+    const folder = files.length === 1 ? await files[0].getAsFileSystemHandle() : null;
+    if (folder?.kind !== "directory") throw new Error(t("請拖入一個包含原 HTML 的資料夾。"));
+    return folder;
+  }
+
+  async function canWrite(folder) {
+    return await folder.queryPermission(writeAccess) === "granted";
+  }
+
+  async function requestWrite(folder) {
+    if (await folder.requestPermission(writeAccess) !== "granted") {
+      throw new Error(t("請允許瀏覽器寫入簡報資料夾。"));
+    }
+    return folder;
   }
 
   async function overwrite(deck, folder, name) {
@@ -1513,7 +1543,7 @@ return function createLocalSave({ window, exporter, t }) {
     return existingMedia;
   }
 
-  return { supported, pickFolder, overwrite };
+  return { supported, supportsDrop, pickFolder, folderFromDrop, canWrite, requestWrite, overwrite };
 }
 })();
 
@@ -2367,6 +2397,7 @@ const bindSaveDialog = (() => {
 return function bindSaveDialog({ dom, document, window, store, model, media, exporter, localSave, sourceName, canvas, view, toast, urls, onAttach, t }) {
   const { id, on } = dom;
   let saving = false;
+  let pendingFolder = null;
 
   function updateOptions() {
     const { count, unavailable, relative, canLink } = exporter.inspect(store.deck);
@@ -2382,7 +2413,10 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     id("savePackage").disabled = saving || unavailable > 0;
     const name = sourceName();
     id("saveLocal").disabled = saving || !localSave.supported || !name;
-    id("localSaveHint").textContent = !localSave.supported
+    id("localDropZone").hidden = !localSave.supportsDrop || !name;
+    id("saveGrantedFolder").hidden = !pendingFolder;
+    id("saveGrantedFolder").disabled = saving;
+    id("localSaveHint").textContent = !localSave.supported && !localSave.supportsDrop
       ? t("請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。")
       : name
         ? t("選定原 HTML 所在的資料夾後，會直接覆蓋「{name}」。", { name })
@@ -2396,6 +2430,7 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
 
   function open() {
     canvas.closeInline(true);
+    pendingFolder = null;
     id("saveName").value = store.deck.title || t("未命名簡報");
     id("saveMessage").textContent = "";
     updateOptions();
@@ -2413,7 +2448,7 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     window.setTimeout(() => urls.revokeObjectURL(url), 60000);
   }
 
-  async function save(mode) {
+  async function save(mode, getFolder = localSave.pickFolder) {
     if (saving) return;
     const revision = store.revision;
     const deck = structuredClone(store.deck);
@@ -2425,8 +2460,13 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
       let message;
       if (local) {
         const name = sourceName();
-        const folder = await localSave.pickFolder();
-        if (!folder) return;
+        const folder = await getFolder();
+        pendingFolder = null;
+        if (!await localSave.canWrite(folder)) {
+          pendingFolder = folder;
+          id("saveMessage").textContent = t("已選定「{folder}」。請按「允許寫入並儲存」。", { folder: folder.name });
+          return;
+        }
         id("saveMessage").textContent = t("正在儲存本機簡報…");
         const existingMedia = await localSave.overwrite(deck, folder, name);
         if (existingMedia.length && revision === store.revision) {
@@ -2458,6 +2498,12 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
   on("save", "click", open);
   on("savePackage", "click", () => save("package"));
   on("saveLocal", "click", () => save("local"));
+  on("saveGrantedFolder", "click", () => save("local", () => localSave.requestWrite(pendingFolder)));
+  on("localDropZone", "dragover", (event) => event.preventDefault());
+  on("localDropZone", "drop", (event) => {
+    event.preventDefault();
+    return save("local", () => localSave.folderFromDrop(event.dataTransfer.items));
+  });
   on("saveStandalone", "click", () => save("standalone"));
   on("saveLinked", "click", () => save("linked"));
   on("pickFolder", "click", () => id("sourceFolder").click());
@@ -3435,6 +3481,12 @@ const messages = {
     "下移投影片": "Move slide down",
     "下載 HTML＋影音 ZIP": "Download HTML + media ZIP",
     "覆蓋本機簡報（HTML＋媒體）": "Overwrite local presentation (HTML + media)",
+    "或把原簡報資料夾拖到這裡": "Or drag the original presentation folder here",
+    "允許寫入並儲存": "Allow writing and save",
+    "未取得資料夾的存取權。若已選定，請改將原簡報資料夾拖到上方拖放區。": "The browser did not provide access to the folder. If you selected it, drag the original presentation folder to the drop zone above.",
+    "未取得資料夾的存取權。請重新選取原 HTML 所在的資料夾。": "The browser did not provide access to the folder. Select the folder containing the original HTML again.",
+    "請拖入一個包含原 HTML 的資料夾。": "Drag in one folder containing the original HTML.",
+    "已選定「{folder}」。請按「允許寫入並儲存」。": "Selected “{folder}”. Click “Allow writing and save”.",
     "請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。": "Use a browser that can write to local folders, such as Chrome or Edge on a computer, or choose a download option.",
     "選定原 HTML 所在的資料夾後，會直接覆蓋「{name}」。": "Select the folder containing the original HTML to overwrite “{name}” immediately.",
     "請先用「開啟簡報」載入要覆蓋的 HTML。": "Use Open presentation to load the HTML you want to overwrite.",
@@ -3724,6 +3776,12 @@ const messages = {
     "下移投影片": "スライドを下へ",
     "下載 HTML＋影音 ZIP": "HTML とメディアを ZIP で保存",
     "覆蓋本機簡報（HTML＋媒體）": "ローカルのプレゼンを上書き（HTML＋メディア）",
+    "或把原簡報資料夾拖到這裡": "または元のプレゼンのフォルダーをここにドラッグ",
+    "允許寫入並儲存": "書き込みを許可して保存",
+    "未取得資料夾的存取權。若已選定，請改將原簡報資料夾拖到上方拖放區。": "ブラウザーからフォルダーへのアクセスが得られませんでした。選択済みの場合は、元のプレゼンのフォルダーを上の枠にドラッグしてください。",
+    "未取得資料夾的存取權。請重新選取原 HTML 所在的資料夾。": "ブラウザーからフォルダーへのアクセスが得られませんでした。元の HTML があるフォルダーを選び直してください。",
+    "請拖入一個包含原 HTML 的資料夾。": "元の HTML があるフォルダーを 1 つドラッグしてください。",
+    "已選定「{folder}」。請按「允許寫入並儲存」。": "「{folder}」を選択しました。「書き込みを許可して保存」を押してください。",
     "請使用支援本機資料夾寫入的瀏覽器（例如電腦版 Chrome 或 Edge），或使用下方的下載選項。": "PC 版の Chrome や Edge など、ローカルフォルダーへの書き込みに対応したブラウザーを使用するか、ダウンロードを選んでください。",
     "選定原 HTML 所在的資料夾後，會直接覆蓋「{name}」。": "元の HTML があるフォルダーを選ぶと、「{name}」がすぐに上書きされます。",
     "請先用「開啟簡報」載入要覆蓋的 HTML。": "「プレゼンを開く」から上書きする HTML を開いてください。",
