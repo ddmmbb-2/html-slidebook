@@ -598,6 +598,7 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
                 <option value="contain" data-ui="鎖定原比例">鎖定原比例</option>
                 <option value="stretch" data-ui="自由調整寬高">自由調整寬高</option>
               </select>
+              <p class="hint" data-ui="圖片可拖出投影片邊緣，只顯示頁面內的部分。">圖片可拖出投影片邊緣，只顯示頁面內的部分。</p>
             </div>
             <div id="videoFields" hidden>
               <label class="field-label" for="videoStart" data-ui="影片播放時機">影片播放時機</label>
@@ -852,9 +853,19 @@ function clamp(number, min, max) {
   return Math.min(max, Math.max(min, number));
 }
 
-function boxValue(object, key, value) {
-  const limits = { x: [0, 100 - object.w], y: [0, 100 - object.h], w: [1, 100 - object.x], h: [1, 100 - object.y] };
-  return clamp(value, ...limits[key]);
+function boxLimits(object, key, allowOverflow = false) {
+  const limits = allowOverflow ? {
+    x: [1 - object.w, 99], y: [1 - object.h, 99],
+    w: [Math.max(1, 1 - object.x), 1000], h: [Math.max(1, 1 - object.y), 1000],
+  } : {
+    x: [0, 100 - object.w], y: [0, 100 - object.h],
+    w: [1, 100 - object.x], h: [1, 100 - object.y],
+  };
+  return limits[key];
+}
+
+function boxValue(object, key, value, allowOverflow) {
+  return clamp(value, ...boxLimits(object, key, allowOverflow));
 }
 
 function isImage(object, assets) {
@@ -875,8 +886,10 @@ function imageFit(value) {
 }
 
 function resizeLockedImage(object, scale) {
-  const minScale = Math.max(1 / object.w, 1 / object.h);
-  const maxScale = Math.min((100 - object.x) / object.w, (100 - object.y) / object.h);
+  const [minWidth, maxWidth] = boxLimits(object, "w", true);
+  const [minHeight, maxHeight] = boxLimits(object, "h", true);
+  const minScale = Math.max(minWidth / object.w, minHeight / object.h);
+  const maxScale = Math.min(maxWidth / object.w, maxHeight / object.h);
   const factor = clamp(scale, minScale, maxScale);
   return { w: object.w * factor, h: object.h * factor };
 }
@@ -886,7 +899,11 @@ function fitImageBox(object, naturalRatio, slideRatio) {
   const percentRatio = naturalRatio * heightFor(slideRatio) / WIDTH;
   const w = Math.max(1, Math.min(object.w, object.h * percentRatio));
   const h = Math.max(1, Math.min(object.h, object.w / percentRatio));
-  return { x: object.x + (object.w - w) / 2, y: object.y + (object.h - h) / 2, w, h };
+  return {
+    x: boxValue({ w }, "x", object.x + (object.w - w) / 2, true),
+    y: boxValue({ h }, "y", object.y + (object.h - h) / 2, true),
+    w, h,
+  };
 }
 
 function textObject(text, box, size, color = "#25322d", weight = 400) {
@@ -963,7 +980,7 @@ function mediaObject(assetId, kind, index, placement) {
 }
 
 return {
-  WIDTH, HEIGHT, heightFor, fontKey, FONT_FAMILIES, makeId, openDeck, referencedAssets, clamp, boxValue,
+  WIDTH, HEIGHT, heightFor, fontKey, FONT_FAMILIES, makeId, openDeck, referencedAssets, clamp, boxLimits, boxValue,
   MIN_SYMBOL_SIZE, MAX_SYMBOL_SIZE, resizeSymbol, symbolObject, setAspectRatio,
   textObject, slideFromTemplate, mediaObject, videoStartMode,
   isImage, canRotate, rotationValue, imageFit, resizeLockedImage, fitImageBox,
@@ -1650,7 +1667,14 @@ return function createEditorView({ dom, document, store, slideView, window, mode
   }
 
   function syncGeometry(object) {
-    for (const [name, key] of Object.entries(geometry)) value(name, Math.round(object[key] * 10) / 10);
+    const allowOverflow = model.isImage(object, store.deck.assets);
+    for (const [name, key] of Object.entries(geometry)) {
+      const field = id(name);
+      const [min, max] = model.boxLimits(object, key, allowOverflow);
+      field.min = min;
+      field.max = max;
+      value(name, Math.round(object[key] * 10) / 10);
+    }
     if (object.symbol) value("symbolSize", object.size);
   }
 
@@ -1839,11 +1863,17 @@ return function createEditActions({ store, model, media, t = (text) => text }) {
     store.edit(({ deck }) => {
       media.remember(item);
       deck.assets[item.id] = item.asset;
-      const keepImageSettings = model.isImage(object, deck.assets) && item.asset.kind === "image";
+      const wasImage = model.isImage(object, deck.assets);
       object.asset = item.id;
-      if (!keepImageSettings) {
+      if (!wasImage || item.asset.kind !== "image") {
         delete object.rotation;
         delete object.imageFit;
+      }
+      if (wasImage && item.asset.kind !== "image") {
+        object.w = model.clamp(object.w, 1, 100);
+        object.h = model.clamp(object.h, 1, 100);
+        object.x = model.boxValue(object, "x", object.x);
+        object.y = model.boxValue(object, "y", object.y);
       }
     });
     return true;
@@ -1937,18 +1967,19 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
     if (!object || !rect.width || !rect.height) return;
     const rotate = event.target.classList.contains("rotate-handle");
     const resize = event.target.classList.contains("resize-handle");
+    const isImage = model.isImage(object, store.deck.assets);
     const angle = model.canRotate(object, store.deck.assets) ? model.rotationValue(object.rotation) : 0;
     const centerX = rect.left + (object.x + object.w / 2) * rect.width / 100;
     const centerY = rect.top + (object.y + object.h / 2) * rect.height / 100;
     gesture = {
       pointerId: event.pointerId, x: event.clientX, y: event.clientY, rect,
       object, original: { ...object }, rotate, resize, angle, centerX, centerY, active: false,
-      imageLocked: model.isImage(object, store.deck.assets) && model.imageFit(object.imageFit) === "contain",
+      isImage, imageLocked: isImage && model.imageFit(object.imageFit) === "contain",
     };
   }
 
   function resizeBox(gesture, dx, dy) {
-    const { original, rect, angle, imageLocked } = gesture;
+    const { original, rect, angle, isImage, imageLocked } = gesture;
     const radians = angle * Math.PI / 180;
     const cos = Math.cos(radians);
     const sin = Math.sin(radians);
@@ -1960,8 +1991,8 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
     const size = original.symbol ? model.resizeSymbol(original, original.size * scale, store.deck.aspectRatio)
       : imageLocked ? model.resizeLockedImage(original, scale)
       : {
-        w: model.boxValue(original, "w", original.w + localX / rect.width * 100),
-        h: model.boxValue(original, "h", original.h + localY / rect.height * 100),
+        w: model.boxValue(original, "w", original.w + localX / rect.width * 100, isImage),
+        h: model.boxValue(original, "h", original.h + localY / rect.height * 100, isImage),
       };
     if (!angle) return size;
 
@@ -1970,7 +2001,7 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
     const heightChange = (size.h - original.h) * rect.height / 100;
     const x = original.x + ((cos - 1) * widthChange - sin * heightChange) / 2 / rect.width * 100;
     const y = original.y + (sin * widthChange + (cos - 1) * heightChange) / 2 / rect.height * 100;
-    return { ...size, x: model.boxValue(size, "x", x), y: model.boxValue(size, "y", y) };
+    return { ...size, x: model.boxValue(size, "x", x, isImage), y: model.boxValue(size, "y", y, isImage) };
   }
 
   function pointerMove(event) {
@@ -1980,7 +2011,7 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
     if (!gesture.active && Math.hypot(dx, dy) < 4) return;
     gesture.active = true;
     const object = gesture.object;
-    const { original, rect, resize, rotate, angle, centerX, centerY } = gesture;
+    const { original, rect, resize, rotate, angle, centerX, centerY, isImage } = gesture;
     let updated;
     if (rotate) {
       const x = event.clientX - centerX;
@@ -1995,8 +2026,8 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
       updated = resizeBox(gesture, dx, dy);
     } else {
       updated = {
-        x: model.boxValue(original, "x", original.x + dx / rect.width * 100),
-        y: model.boxValue(original, "y", original.y + dy / rect.height * 100),
+        x: model.boxValue(original, "x", original.x + dx / rect.width * 100, isImage),
+        y: model.boxValue(original, "y", original.y + dy / rect.height * 100, isImage),
       };
     }
     if (Object.entries(updated).every(([key, value]) => object[key] === value)) return;
@@ -2222,7 +2253,7 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
   for (const [name, key] of Object.entries(view.geometry)) {
     const size = key === "w" || key === "h";
     bindField(name, store.object, key, asNumber((value, item) => item.symbol && size
-      ? undefined : model.boxValue(item, key, value)), size ? (item, value) => {
+      ? undefined : model.boxValue(item, key, value, model.isImage(item, store.deck.assets))), size ? (item, value) => {
       if (model.isImage(item, store.deck.assets) && model.imageFit(item.imageFit) === "contain") {
         Object.assign(item, model.resizeLockedImage(item, value / item[key]));
       } else {
@@ -3213,6 +3244,7 @@ const messages = {
   "en": {
     "圖片比例": "Image proportions",
     "鎖定原比例": "Keep original proportions",
+    "圖片可拖出投影片邊緣，只顯示頁面內的部分。": "Drag the image past the slide edges to show just the part inside.",
     "自由調整寬高": "Adjust width and height independently",
     "旋轉角度（°）": "Rotation (°)",
     "拖曳旋轉": "Drag to rotate",
@@ -3493,6 +3525,7 @@ const messages = {
   "ja": {
     "圖片比例": "画像の縦横比",
     "鎖定原比例": "元の縦横比を固定",
+    "圖片可拖出投影片邊緣，只顯示頁面內的部分。": "画像をスライドの外へドラッグすると、ページ内の部分だけが表示されます。",
     "自由調整寬高": "幅と高さを個別に調整",
     "旋轉角度（°）": "回転角度（°）",
     "拖曳旋轉": "ドラッグして回転",
