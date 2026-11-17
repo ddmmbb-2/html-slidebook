@@ -34,7 +34,7 @@
 | Slide | `id`、`name`、`color`（十六進位）、`pattern`、`objects: SlideObject[]`。後面的物件顯示在上層。可含 `backgroundAsset: AssetId`，引用 `kind: "image"` 的背景圖，移除後沿用 `color` 和 `pattern`。可含 `mediaBox: [x, y, w, h]`，用於投影片第一個影音物件。 |
 | SlideObject | 共用欄位為 `id`、`type`、`x`、`y`、`w`、`h`。位置與尺寸以 1280 × 720 畫布的百分比表示。 |
 | TextObject | `type: "text"`，另外有 `text`、`size`（畫布像素）、`weight`（400、700、900）、`color`、`align`（left、center、right）。 |
-| MediaObject | `type: "media"`，`asset` 存放 Asset ID。 |
+| MediaObject | `type: "media"`，`asset` 存放 Asset ID。圖片位置可為負值，尺寸可超過畫布的 100%。渲染時由畫布裁掉超出頁面的部分。 |
 | Asset | `kind`（image、video、audio）、`mime`、`name`、`path`（相對 HTML 的 `media/` 路徑）、`bytes`。單一 HTML 匯出另有 Base64 Data URL 欄位 `data`。 |
 
 - 文件以 `#deckData` 的 JSON 為準。編輯時由 `store.edit()` 寫入文件狀態。連續打字與拖曳使用群組識別值，使一段連續操作只佔一筆復原紀錄。
