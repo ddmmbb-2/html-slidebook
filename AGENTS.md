@@ -31,7 +31,7 @@
 | 記錄 | JSON 欄位 |
 |---|---|
 | Deck | `version: 1`、`title: string`、`slides: Slide[]`、`assets: Record<AssetId, Asset>`。至少一張投影片。可含 `presentation: {showPageNumber, showEditorPageNumber}`，兩個布林值缺漏時皆為 `true`。 |
-| Slide | `id`、`name`、`color`（十六進位）、`pattern`（plain、grid、dots）、`objects: SlideObject[]`。後面的物件顯示在上層。可含 `mediaBox: [x, y, w, h]`，用於投影片第一個影音物件。 |
+| Slide | `id`、`name`、`color`（十六進位）、`pattern`、`objects: SlideObject[]`。後面的物件顯示在上層。可含 `backgroundAsset: AssetId`，引用 `kind: "image"` 的背景圖，移除後沿用 `color` 和 `pattern`。可含 `mediaBox: [x, y, w, h]`，用於投影片第一個影音物件。 |
 | SlideObject | 共用欄位為 `id`、`type`、`x`、`y`、`w`、`h`。位置與尺寸以 1280 × 720 畫布的百分比表示。 |
 | TextObject | `type: "text"`，另外有 `text`、`size`（畫布像素）、`weight`（400、700、900）、`color`、`align`（left、center、right）。 |
 | MediaObject | `type: "media"`，`asset` 存放 Asset ID。 |
