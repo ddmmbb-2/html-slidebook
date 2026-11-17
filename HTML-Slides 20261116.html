@@ -120,6 +120,7 @@ h2, h3, p { margin: 0; }
 .slide-surface { position: absolute; width: 1280px; height: 720px; transform-origin: top left; overflow: hidden; color: #202620; }
 .slide-surface[data-pattern="grid"] { background-image: linear-gradient(90deg, #96978c39 1px, transparent 1px), linear-gradient(#96978c39 1px, transparent 1px); background-size: 64px 64px; }
 .slide-surface[data-pattern="dots"] { background-image: radial-gradient(#96978c82 1.4px, transparent 1.4px); background-size: 24px 24px; }
+.slide-background-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background-color: inherit; pointer-events: none; }
 .slide-object { position: absolute; min-width: 0; min-height: 0; }
 .slide-text {
   font-family: "Geist", "Inter", "Noto Sans CJK TC", "Microsoft JhengHei", system-ui, sans-serif;
@@ -549,6 +550,12 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
           <option value="steps" data-ui="三欄底板">三欄底板</option>
           <option value="quote" data-ui="留白邊框">留白邊框</option>
         </select>
+        <div class="layer-actions">
+          <button class="button small" id="setBackgroundImage" aria-describedby="backgroundImageName" data-ui="設定背景圖">設定背景圖</button>
+          <button class="button small" id="removeBackgroundImage" data-ui="移除背景圖" hidden>移除背景圖</button>
+        </div>
+        <p class="media-name" id="backgroundImageName" hidden></p>
+        <input id="backgroundImageFile" type="file" accept="image/*" hidden>
       </section>
       <section class="inspector-section object-section">
         <div class="section-heading"><h3 data-ui="物件">物件</h3><button id="removeObject" class="quiet-button" hidden data-ui="刪除">刪除</button></div>
@@ -833,6 +840,7 @@ function openDeck(saved) {
 function referencedAssets(deck) {
   const ids = new Set();
   for (const slide of deck.slides) {
+    if (typeof slide.backgroundAsset === "string" && slide.backgroundAsset) ids.add(slide.backgroundAsset);
     for (const object of slide.objects) {
       if (object.type === "media") ids.add(object.asset);
     }
@@ -1148,7 +1156,7 @@ function withMime(file, mime) {
   return file.type === mime ? file : file.slice(0, file.size, mime);
 }
 
-return function createMedia({ embedded, makeId, filenames, urls }) {
+return function createMedia({ embedded, makeId, filenames, urls, createImage }) {
   const added = new Map();
   const attached = new Map();
   const cachedURLs = new Map();
@@ -1174,6 +1182,20 @@ return function createMedia({ embedded, makeId, filenames, urls }) {
     const stem = filenames.clean(file.name.slice(0, file.name.length - suffix.length), "影音", 175);
     const path = "media/" + id.slice(0, 12) + "-" + stem + suffix;
     return { id, asset: { kind, mime, name: file.name, path, bytes: file.size }, file: withMime(file, mime) };
+  }
+
+  async function canReadImage(file) {
+    const image = createImage();
+    const url = urls.createObjectURL(file);
+    try {
+      image.src = url;
+      await image.decode();
+      return true;
+    } catch {
+      return false;
+    } finally {
+      urls.revokeObjectURL(url);
+    }
   }
 
   function origin(id) {
@@ -1211,7 +1233,7 @@ return function createMedia({ embedded, makeId, filenames, urls }) {
   }
 
   return {
-    labels, prepare, origin, fileFor, source, attachFolder, replaceDeck,
+    labels, prepare, canReadImage, origin, fileFor, source, attachFolder, replaceDeck,
     remember: ({ id, file }) => added.set(id, file),
     embeddedData: (id) => embedded.get(id),
   };
@@ -1520,6 +1542,16 @@ return function createSlideView({ dom, media, model, t }) {
       if (mode === "edit") element.dataset.id = object.id;
       return element;
     });
+    const asset = assets[slide.backgroundAsset];
+    const backgroundURL = asset?.kind === "image" ? media.source(slide.backgroundAsset, asset) : null;
+    if (backgroundURL) {
+      const image = dom.make("img", "slide-background-image");
+      image.alt = "";
+      image.draggable = false;
+      image.addEventListener("error", () => image.remove(), { once: true });
+      image.src = backgroundURL;
+      elements.unshift(image);
+    }
     surface.replaceChildren(...elements);
     if (mode === "edit") highlight(surface, objectId);
   }
@@ -1633,6 +1665,16 @@ return function createEditorView({ dom, document, store, slideView, window, mode
     value("slideName", slide.name);
     value("slideColor", slide.color);
     value("slidePattern", slide.pattern);
+    const hasBackgroundImage = Boolean(slide.backgroundAsset);
+    const backgroundName = id("backgroundImageName");
+    const backgroundButton = id("setBackgroundImage");
+    backgroundButton.dataset.ui = hasBackgroundImage ? "更換背景圖" : "設定背景圖";
+    backgroundButton.textContent = t(backgroundButton.dataset.ui);
+    backgroundName.textContent = hasBackgroundImage
+      ? store.deck.assets[slide.backgroundAsset]?.name ?? t("找不到檔案") : "";
+    backgroundName.hidden = !hasBackgroundImage;
+    id("removeBackgroundImage").hidden = !hasBackgroundImage;
+    id("slidePattern").disabled = hasBackgroundImage;
     id("objectHint").hidden = Boolean(object);
     id("objectFields").hidden = !object;
     id("removeObject").hidden = !object;
@@ -1807,11 +1849,31 @@ return function createEditActions({ store, model, media, t = (text) => text }) {
     return true;
   }
 
+  async function setSlideBackground(file) {
+    const slide = store.slide();
+    const previous = slide.backgroundAsset;
+    const item = media.prepare(file);
+    if (item?.asset.kind !== "image" || !await media.canReadImage(item.file)) return false;
+    if (!store.deck.slides.includes(slide) || slide.backgroundAsset !== previous) return null;
+    store.edit(({ deck }) => {
+      media.remember(item);
+      deck.assets[item.id] = item.asset;
+      slide.backgroundAsset = item.id;
+    });
+    return true;
+  }
+
+  function removeSlideBackground() {
+    const slide = store.slide();
+    if (slide.backgroundAsset) store.edit(() => { delete slide.backgroundAsset; });
+  }
+
   return {
     addSlide: (template) => insertSlide(model.slideFromTemplate(template, t)),
     addText: () => insertObject(model.textObject(t("輸入文字"), [19, 35, 63, 22], 50)),
     addSymbol: (glyph) => insertObject(model.symbolObject(glyph, store.deck.aspectRatio, store.slide().color)),
     moveSlide, duplicateSlide, removeSlide, removeObject, moveLayer, addMedia, replaceMedia,
+    setSlideBackground, removeSlideBackground,
   };
 }
 })();
@@ -2052,6 +2114,28 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
   on("slideDown", "click", () => perform(() => actions.moveSlide(1), true));
   on("duplicateSlide", "click", () => perform(actions.duplicateSlide, true));
   on("removeSlide", "click", () => perform(actions.removeSlide, true));
+  on("setBackgroundImage", "click", () => id("backgroundImageFile").click());
+  on("backgroundImageFile", "change", async (event) => {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    const button = id("setBackgroundImage");
+    if (button.disabled) return;
+    button.disabled = true;
+    canvas.closeInline(true);
+    try {
+      const result = await actions.setSlideBackground(file);
+      if (result === false) toast(t("無法讀取背景圖，請選擇瀏覽器支援的圖片。"));
+      if (result) {
+        canvas.closeInline(true);
+        view.render();
+        refreshImportedMedia();
+      }
+    } finally {
+      button.disabled = false;
+    }
+  });
+  on("removeBackgroundImage", "click", () => perform(actions.removeSlideBackground));
   on("undo", "click", () => undo(false));
   on("redo", "click", () => undo(true));
   on("addText", "click", () => {
@@ -2620,7 +2704,7 @@ return function start({ window, document, modules }) {
   const { deck, embedded } = model.openDeck(JSON.parse(dom.id("deckData").textContent));
   const store = createStore(deck);
   const urls = window.URL;
-  const media = createMedia({ embedded, makeId: model.makeId, filenames, urls });
+  const media = createMedia({ embedded, makeId: model.makeId, filenames, urls, createImage: () => dom.make("img") });
   const exporter = createExporter({ model, media, filenames, serialize, makeZip, t });
   const slideView = createSlideView({ dom, media, model, t });
   const view = createEditorView({ dom, document, store, slideView, window, model, t });
@@ -3318,6 +3402,10 @@ const messages = {
     "編輯畫布": "Editing canvas",
     "置中": "Center",
     "背景圖樣": "Background design",
+    "設定背景圖": "Set background image",
+    "更換背景圖": "Replace background",
+    "移除背景圖": "Remove background",
+    "無法讀取背景圖，請選擇瀏覽器支援的圖片。": "Could not read the background image. Choose an image supported by your browser.",
     "背景色": "Background color",
     "自動": "Auto",
     "自行加入物件": "Add your own objects",
@@ -3594,6 +3682,10 @@ const messages = {
     "編輯畫布": "編集キャンバス",
     "置中": "中央揃え",
     "背景圖樣": "背景のデザイン",
+    "設定背景圖": "背景画像を設定",
+    "更換背景圖": "背景画像を変更",
+    "移除背景圖": "背景画像を削除",
+    "無法讀取背景圖，請選擇瀏覽器支援的圖片。": "背景画像を読み込めません。ブラウザーが対応している画像を選択してください。",
     "背景色": "背景色",
     "自動": "自動",
     "自行加入物件": "自由にオブジェクトを追加",
