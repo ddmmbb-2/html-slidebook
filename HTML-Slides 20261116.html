@@ -339,6 +339,27 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   cursor: nwse-resize;
 }
 
+.rotate-handle {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fffdf9;
+  border-radius: 50%;
+  color: white;
+  background: var(--accent);
+  font: 22px / 1 system-ui, sans-serif;
+  cursor: grab;
+}
+.rotate-handle:active { cursor: grabbing; }
+.slide-media.stretch-image img.media-element { object-fit: fill; }
+#imageFields { margin: 0 0 9px; }
+
 #language { width: auto; max-width: 9rem; }
 #aspectRatio { margin-bottom: 12px; }
 #transparentText { margin-top: 3px; }
@@ -395,16 +416,6 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
   .document-title { min-width: 8rem; }
   .header-actions { flex-wrap: wrap; margin-left: auto; }
 }
-#printPages { display: none; }
-@media print {
-  html, body { margin: 0; background: white; }
-  body:has(#printPages .print-page) > :not(#printPages) { display: none !important; }
-  #printPages { display: block; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  .print-page { position: relative; break-inside: avoid; }
-  .print-page + .print-page { break-before: page; }
-  .print-page .slide-surface { inset: 0 auto auto 0; }
-}
-
 .symbol-glyph {
   font-family: "Segoe UI Symbol", "Apple Symbols", "DejaVu Sans", "Noto Sans Symbols 2", sans-serif;
   font-variant-emoji: text;
@@ -414,7 +425,8 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
 .slide-symbol .symbol-glyph { pointer-events: none; white-space: nowrap; }
 .symbol-group + .symbol-group { margin-top: 15px; }
 .symbol-group h3 { font-size: 13px; margin-bottom: 6px; }
-.symbol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(35px, 1fr)); gap: 6px; }
+.symbol-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(39px, 1fr)); gap: 6px; }
+#symbolDialog { width: min(635px, calc(100vw - 26px)); }
 .symbol-option { min-height: 40px; padding: 4px; font-size: 25px; }
 .symbol-inspector { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
 .symbol-inspector > span {
@@ -453,7 +465,7 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
 </head>
 <body>
 <header class="app-header">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name" data-ui="HTML 簡報">HTML 簡報</span><span class="app-version">v1.4.2</span></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">▰</span><span class="brand-name" data-ui="HTML 簡報">HTML 簡報</span><span class="app-version">v1.4.3</span></div>
   <div class="document-title">
     <label for="deckTitle" data-ui="簡報名稱">簡報名稱</label>
     <input id="deckTitle" maxlength="100" placeholder="未命名簡報" data-ui-placeholder="未命名簡報">
@@ -573,6 +585,13 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
           </div>
           <div id="mediaFields" hidden>
             <p class="media-name" id="mediaName"></p>
+            <div id="imageFields" hidden>
+              <label class="field-label" for="imageFit" data-ui="圖片比例">圖片比例</label>
+              <select id="imageFit">
+                <option value="contain" data-ui="鎖定原比例">鎖定原比例</option>
+                <option value="stretch" data-ui="自由調整寬高">自由調整寬高</option>
+              </select>
+            </div>
             <div id="videoFields" hidden>
               <label class="field-label" for="videoStart" data-ui="影片播放時機">影片播放時機</label>
               <select id="videoStart">
@@ -583,6 +602,10 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
             </div>
             <button class="button small" id="replaceMedia" data-ui="更換檔案">更換檔案</button>
             <input id="replacementFile" type="file" accept="image/*,video/*,audio/*,.m4a,.ogg" hidden>
+          </div>
+          <div id="rotationFields" hidden>
+            <label class="field-label" for="objRotation" data-ui="旋轉角度（°）">旋轉角度（°）</label>
+            <input id="objRotation" type="number" step="1">
           </div>
           <div class="field-grid geometry">
             <label><span class="ui-label" data-ui="水平位置 %">水平位置 %</span><input id="objX" type="number" min="0" max="99" step="0.1"></label>
@@ -621,8 +644,6 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
     <button class="button primary" id="savePackage" data-ui="下載 HTML＋影音 ZIP">下載 HTML＋影音 ZIP</button>
     <button class="button" id="saveStandalone" data-ui="下載單一 HTML">下載單一 HTML</button>
     <button class="button" id="saveLinked" data-ui="只下載 HTML（沿用原影音）">只下載 HTML（沿用原影音）</button>
-    <button class="button" id="savePDF" data-ui="匯出 PDF">匯出 PDF</button>
-    <p class="hint" data-ui="在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。">在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。</p>
   </div>
   <p class="save-message" id="saveMessage" role="status"></p>
 </dialog>
@@ -641,7 +662,6 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
     <button class="button" id="fullscreen" data-ui="全螢幕">全螢幕</button>
   </div>
 </section>
-<div id="printPages" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <script id="deckData" type="application/json">
 {
@@ -829,6 +849,38 @@ function boxValue(object, key, value) {
   return clamp(value, ...limits[key]);
 }
 
+function isImage(object, assets) {
+  return object?.type === "media" && assets[object.asset]?.kind === "image";
+}
+
+function canRotate(object, assets) {
+  return (object?.type === "text" && object.symbol === true) || isImage(object, assets);
+}
+
+function rotationValue(value) {
+  if (!Number.isFinite(value)) return 0;
+  return ((Math.round(value) + 180) % 360 + 360) % 360 - 180;
+}
+
+function imageFit(value) {
+  return value === "stretch" ? "stretch" : "contain";
+}
+
+function resizeLockedImage(object, scale) {
+  const minScale = Math.max(1 / object.w, 1 / object.h);
+  const maxScale = Math.min((100 - object.x) / object.w, (100 - object.y) / object.h);
+  const factor = clamp(scale, minScale, maxScale);
+  return { w: object.w * factor, h: object.h * factor };
+}
+
+function fitImageBox(object, naturalRatio, slideRatio) {
+  if (!(naturalRatio > 0) || !Number.isFinite(naturalRatio)) return {};
+  const percentRatio = naturalRatio * heightFor(slideRatio) / WIDTH;
+  const w = Math.max(1, Math.min(object.w, object.h * percentRatio));
+  const h = Math.max(1, Math.min(object.h, object.w / percentRatio));
+  return { x: object.x + (object.w - w) / 2, y: object.y + (object.h - h) / 2, w, h };
+}
+
 function textObject(text, box, size, color = "#25322d", weight = 400) {
   const [x, y, w, h] = box;
   return { id: makeId(), type: "text", x, y, w, h, text, size, color, weight, align: "left" };
@@ -906,6 +958,7 @@ return {
   WIDTH, HEIGHT, heightFor, fontKey, FONT_FAMILIES, makeId, openDeck, referencedAssets, clamp, boxValue,
   MIN_SYMBOL_SIZE, MAX_SYMBOL_SIZE, resizeSymbol, symbolObject, setAspectRatio,
   textObject, slideFromTemplate, mediaObject, videoStartMode,
+  isImage, canRotate, rotationValue, imageFit, resizeLockedImage, fitImageBox,
 };
 })();
 
@@ -1358,6 +1411,8 @@ return function createSlideView({ dom, media, model, t }) {
     element.style.top = object.y + "%";
     element.style.width = object.w + "%";
     element.style.height = object.h + "%";
+    const angle = element.classList.contains("rotatable") ? model.rotationValue(object.rotation) : 0;
+    element.style.transform = angle ? "rotate(" + angle + "deg)" : "";
   }
 
   function applyText(element, object) {
@@ -1373,18 +1428,18 @@ return function createSlideView({ dom, media, model, t }) {
     const asset = assets[object.asset];
     const label = asset?.name ?? t("找不到檔案");
     const kind = asset?.kind;
-    if ((mode === "mini" || mode === "print") && kind !== "image") {
+    if (mode === "mini" && kind !== "image") {
       const badge = dom.make("div", "mini-media");
-      const kindLabel = t(media.labels[kind] ?? "影音");
-      badge.textContent = mode === "print" ? kindLabel + " · " + label : kindLabel;
+      badge.textContent = t(media.labels[kind] ?? "影音");
       element.append(badge);
       return;
     }
 
-    function fallback() {
+    function fallback(event) {
       const badge = dom.make("div", "media-fallback");
       badge.textContent = t("無法開啟 {name}", { name: label });
-      element.replaceChildren(badge);
+      if (event) event.currentTarget.replaceWith(badge);
+      else element.append(badge);
     }
 
     const url = media.source(object.asset, asset);
@@ -1421,6 +1476,18 @@ return function createSlideView({ dom, media, model, t }) {
       const handle = element.querySelector(".resize-handle");
       if (selected && !handle) element.append(dom.make("span", "resize-handle"));
       if (!selected) handle?.remove();
+      const rotationHandle = element.querySelector(".rotate-handle");
+      if (selected && element.classList.contains("rotatable")) {
+        if (!rotationHandle) {
+          const control = dom.make("span", "rotate-handle");
+          control.textContent = "↻";
+          control.title = t("拖曳旋轉");
+          control.setAttribute("aria-hidden", "true");
+          element.append(control);
+        }
+      } else {
+        rotationHandle?.remove();
+      }
     }
   }
 
@@ -1433,6 +1500,10 @@ return function createSlideView({ dom, media, model, t }) {
       const isText = object.type === "text";
       const style = isText ? (object.symbol ? "slide-symbol" : "slide-text") : "slide-media";
       const element = dom.make("div", "slide-object " + style);
+      if (model.canRotate(object, assets)) element.classList.add("rotatable");
+      if (model.isImage(object, assets) && model.imageFit(object.imageFit) === "stretch") {
+        element.classList.add("stretch-image");
+      }
       applyBox(element, object);
       if (isText) {
         applyText(element, object);
@@ -1551,6 +1622,11 @@ return function createEditorView({ dom, document, store, slideView, window, mode
     if (object.symbol) value("symbolSize", object.size);
   }
 
+  function imageAspect() {
+    const image = id("editorSurface").querySelector(".slide-object.selected img.media-element");
+    return image?.naturalHeight ? image.naturalWidth / image.naturalHeight : 0;
+  }
+
   function syncInspector() {
     const slide = store.slide();
     const object = store.object();
@@ -1564,6 +1640,11 @@ return function createEditorView({ dom, document, store, slideView, window, mode
 
     const isText = object.type === "text";
     const isSymbol = isText && object.symbol === true;
+    const isImage = model.isImage(object, store.deck.assets);
+    id("rotationFields").hidden = !isImage && !isSymbol;
+    id("imageFields").hidden = !isImage;
+    value("objRotation", model.rotationValue(object.rotation));
+    value("imageFit", model.imageFit(object.imageFit));
     id("textFields").hidden = !isText || isSymbol;
     id("symbolFields").hidden = !isSymbol;
     id("textStyleFields").hidden = !isText;
@@ -1618,7 +1699,7 @@ return function createEditorView({ dom, document, store, slideView, window, mode
 
   return {
     fit, render, refreshSlide, refreshMini, syncStatus, syncTitle, syncGeometry, syncInspector, highlight,
-    geometry, revealSlide: () => currentMini()?.scrollIntoView({ block: "nearest", inline: "nearest" }),
+    geometry, imageAspect, revealSlide: () => currentMini()?.scrollIntoView({ block: "nearest", inline: "nearest" }),
   };
 }
 })();
@@ -1716,7 +1797,12 @@ return function createEditActions({ store, model, media, t = (text) => text }) {
     store.edit(({ deck }) => {
       media.remember(item);
       deck.assets[item.id] = item.asset;
+      const keepImageSettings = model.isImage(object, deck.assets) && item.asset.kind === "image";
       object.asset = item.id;
+      if (!keepImageSettings) {
+        delete object.rotation;
+        delete object.imageFit;
+      }
     });
     return true;
   }
@@ -1787,10 +1873,42 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
     const object = store.object();
     const rect = surface.getBoundingClientRect();
     if (!object || !rect.width || !rect.height) return;
+    const rotate = event.target.classList.contains("rotate-handle");
+    const resize = event.target.classList.contains("resize-handle");
+    const angle = model.canRotate(object, store.deck.assets) ? model.rotationValue(object.rotation) : 0;
+    const centerX = rect.left + (object.x + object.w / 2) * rect.width / 100;
+    const centerY = rect.top + (object.y + object.h / 2) * rect.height / 100;
     gesture = {
       pointerId: event.pointerId, x: event.clientX, y: event.clientY, rect,
-      object, original: { ...object }, resize: event.target.classList.contains("resize-handle"), active: false,
+      object, original: { ...object }, rotate, resize, angle, centerX, centerY, active: false,
+      imageLocked: model.isImage(object, store.deck.assets) && model.imageFit(object.imageFit) === "contain",
     };
+  }
+
+  function resizeBox(gesture, dx, dy) {
+    const { original, rect, angle, imageLocked } = gesture;
+    const radians = angle * Math.PI / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const localX = dx * cos + dy * sin;
+    const localY = dy * cos - dx * sin;
+    const width = original.w * rect.width / 100;
+    const height = original.h * rect.height / 100;
+    const scale = 1 + (localX * width + localY * height) / (width ** 2 + height ** 2);
+    const size = original.symbol ? model.resizeSymbol(original, original.size * scale, store.deck.aspectRatio)
+      : imageLocked ? model.resizeLockedImage(original, scale)
+      : {
+        w: model.boxValue(original, "w", original.w + localX / rect.width * 100),
+        h: model.boxValue(original, "h", original.h + localY / rect.height * 100),
+      };
+    if (!angle) return size;
+
+    // Compensate for the moving rotation center to anchor the opposite corner.
+    const widthChange = (size.w - original.w) * rect.width / 100;
+    const heightChange = (size.h - original.h) * rect.height / 100;
+    const x = original.x + ((cos - 1) * widthChange - sin * heightChange) / 2 / rect.width * 100;
+    const y = original.y + (sin * widthChange + (cos - 1) * heightChange) / 2 / rect.height * 100;
+    return { ...size, x: model.boxValue(size, "x", x), y: model.boxValue(size, "y", y) };
   }
 
   function pointerMove(event) {
@@ -1800,27 +1918,34 @@ return function bindCanvas({ dom, window, store, model, view, slideView, t }) {
     if (!gesture.active && Math.hypot(dx, dy) < 4) return;
     gesture.active = true;
     const object = gesture.object;
-    const { original, rect, resize } = gesture;
-    const element = surface.querySelector(".slide-object.selected");
-    if (resize && object.symbol) {
-      const width = original.w * rect.width / 100;
-      const height = original.h * rect.height / 100;
-      const scale = 1 + (dx * width + dy * height) / (width ** 2 + height ** 2);
-      const updated = model.resizeSymbol(original, original.size * scale, store.deck.aspectRatio);
-      if (object.size === updated.size) return;
-      store.edit(() => Object.assign(object, updated), gesture);
-      if (element) slideView.applyText(element, object);
+    const { original, rect, resize, rotate, angle, centerX, centerY } = gesture;
+    let updated;
+    if (rotate) {
+      const x = event.clientX - centerX;
+      const y = event.clientY - centerY;
+      if (Math.hypot(x, y) < 2) return;
+      const start = Math.atan2(gesture.y - centerY, gesture.x - centerX);
+      const degrees = angle + (Math.atan2(y, x) - start) * 180 / Math.PI;
+      const rotation = model.rotationValue(event.shiftKey ? Math.round(degrees / 15) * 15 : degrees);
+      if (rotation === model.rotationValue(object.rotation)) return;
+      updated = { rotation };
+    } else if (resize) {
+      updated = resizeBox(gesture, dx, dy);
     } else {
-      const keys = resize ? ["w", "h"] : ["x", "y"];
-      const units = [dx / rect.width * 100, dy / rect.height * 100];
-      store.edit(() => {
-        keys.forEach((key, index) => {
-          object[key] = model.boxValue(object, key, original[key] + units[index]);
-        });
-      }, gesture);
+      updated = {
+        x: model.boxValue(original, "x", original.x + dx / rect.width * 100),
+        y: model.boxValue(original, "y", original.y + dy / rect.height * 100),
+      };
     }
-    if (element) slideView.applyBox(element, object);
+    if (Object.entries(updated).every(([key, value]) => object[key] === value)) return;
+    store.edit(() => Object.assign(object, updated), gesture);
+    const element = surface.querySelector(".slide-object.selected");
+    if (element) {
+      slideView.applyBox(element, object);
+      if (resize && object.symbol) slideView.applyText(element, object);
+    }
     view.syncGeometry(object);
+    if (rotate) dom.value("objRotation", object.rotation);
     view.syncStatus();
   }
 
@@ -1862,13 +1987,17 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
     if (reveal) view.revealSlide();
   }
 
-  function bindField(name, target, key, convert = (value) => value) {
+  function bindField(name, target, key, convert = (value) => value, update) {
     on(name, "input", (event) => {
       const item = target();
       if (!item) return;
       const value = convert(event.target.value, item);
       if (value === undefined || value === item[key]) return;
-      store.edit(() => { item[key] = value; }, event.target);
+      store.edit(() => {
+        if (update) update(item, value);
+        else item[key] = value;
+      }, event.target);
+      if (update) view.syncGeometry(item);
       if (name === "deckTitle") view.syncTitle();
       else view.refreshSlide();
       view.syncStatus();
@@ -1953,6 +2082,17 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
     store.finishGroup();
     if (store.object()?.symbol) id("symbolSize").value = store.object().size;
   });
+  on("imageFit", "change", (event) => {
+    const object = store.object();
+    if (!model.isImage(object, store.deck.assets)) return;
+    const fit = model.imageFit(event.target.value);
+    if (fit === model.imageFit(object.imageFit)) return;
+    const box = model.fitImageBox(object, view.imageAspect(), store.deck.aspectRatio);
+    store.edit(() => Object.assign(object, box, { imageFit: fit }));
+    view.refreshSlide();
+    view.syncGeometry(object);
+    view.syncStatus();
+  });
   on("addMedia", "click", () => id("mediaFiles").click());
   on("mediaFiles", "change", (event) => {
     const files = event.target.files;
@@ -1991,9 +2131,20 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
     const object = store.object();
     return object?.type === "media" && store.deck.assets[object.asset]?.kind === "video" ? object : null;
   }, "videoStart", model.videoStartMode);
+  bindField("objRotation", () => {
+    const object = store.object();
+    return model.canRotate(object, store.deck.assets) ? object : null;
+  }, "rotation", asNumber(model.rotationValue));
   for (const [name, key] of Object.entries(view.geometry)) {
-    bindField(name, store.object, key, asNumber((value, item) => item.symbol && (key === "w" || key === "h")
-      ? undefined : model.boxValue(item, key, value)));
+    const size = key === "w" || key === "h";
+    bindField(name, store.object, key, asNumber((value, item) => item.symbol && size
+      ? undefined : model.boxValue(item, key, value)), size ? (item, value) => {
+      if (model.isImage(item, store.deck.assets) && model.imageFit(item.imageFit) === "contain") {
+        Object.assign(item, model.resizeLockedImage(item, value / item[key]));
+      } else {
+        item[key] = value;
+      }
+    } : undefined);
   }
 
   window.addEventListener("beforeunload", (event) => {
@@ -2021,7 +2172,7 @@ return function bindEditor({ dom, window, store, model, view, canvas, actions, t
 
 // save-dialog.mjs
 const bindSaveDialog = (() => {
-return function bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, onAttach, t, printDeck }) {
+return function bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, onAttach, t }) {
   const { id, on } = dom;
   let saving = false;
 
@@ -2042,7 +2193,6 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
     id("saveLinked").disabled = saving;
     id("saveStandalone").classList.toggle("primary", count === 0);
     id("pickFolder").disabled = saving;
-    id("savePDF").disabled = saving;
   }
 
   function open() {
@@ -2091,17 +2241,6 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
   on("savePackage", "click", () => save("package"));
   on("saveStandalone", "click", () => save("standalone"));
   on("saveLinked", "click", () => save("linked"));
-  on("savePDF", "click", async () => {
-    if (saving) return;
-    const filename = id("saveName").value.trim().replace(/\.pdf$/i, "");
-    const deck = structuredClone(store.deck);
-    id("saveDialog").close();
-    try {
-      await printDeck(deck, filename);
-    } catch {
-      toast(t("無法開啟 PDF 列印。"));
-    }
-  });
   on("pickFolder", "click", () => id("sourceFolder").click());
   on("sourceFolder", "change", (event) => {
     const restored = media.attachFolder(event.target.files, model.referencedAssets(store.deck));
@@ -2118,61 +2257,6 @@ return function bindSaveDialog({ dom, document, window, store, model, media, exp
   }
 
   return { open };
-}
-})();
-
-// print.mjs
-const bindPrint = (() => {
-return function bindPrint({ document, window, dom, model, slideView, t }) {
-  const pages = dom.id("printPages");
-  let active = false;
-  let previousTitle;
-  let styles;
-
-  function clear() {
-    if (!active) return;
-    active = false;
-    document.title = previousTitle;
-    styles?.remove();
-    pages.replaceChildren();
-  }
-  window.addEventListener("afterprint", clear);
-
-  return async function printDeck(deck, filename) {
-    if (active) return;
-    active = true;
-    previousTitle = document.title;
-    try {
-      const height = model.heightFor(deck.aspectRatio);
-      const sheets = deck.slides.map((slide) => {
-        const page = dom.make("div", "print-page");
-        const surface = dom.make("div", "slide-surface");
-        slideView.draw(surface, slide, deck.assets, "print", deck.aspectRatio);
-        page.append(surface);
-        return page;
-      });
-      pages.replaceChildren(...sheets);
-      styles = dom.make("style");
-      styles.textContent = "@page { size: " + model.WIDTH + "px " + height + "px; margin: 0; }" +
-        ".print-page { width: " + model.WIDTH + "px; height: " + (height - 1) + "px; }";
-      document.head.append(styles);
-
-      const artwork = Array.from(pages.querySelectorAll("img"), (image) => image.decode().catch(() => {}));
-      if (artwork.length) {
-        let timer;
-        await Promise.race([
-          Promise.all(artwork),
-          new Promise((resolve) => { timer = window.setTimeout(resolve, 4500); }),
-        ]);
-        window.clearTimeout(timer);
-      }
-      document.title = filename || deck.title || t("未命名簡報");
-      window.print();
-    } catch (error) {
-      clear();
-      throw error;
-    }
-  };
 }
 })();
 
@@ -2464,15 +2548,35 @@ const GROUPS = [
   ["箭頭", [
     ["←", "向左"], ["↑", "向上"], ["→", "向右"], ["↓", "向下"],
     ["↖", "左上"], ["↗", "右上"], ["↘", "右下"], ["↙", "左下"],
-    ["↔", "左右雙向"], ["↕", "上下雙向"],
+    ["↔", "左右雙向"], ["↕", "上下雙向"], ["⇦", "粗左箭頭"], ["⇧", "粗上箭頭"],
+    ["⇨", "粗右箭頭"], ["⇩", "粗下箭頭"], ["⇐", "雙線左箭頭"], ["⇒", "雙線右箭頭"],
+    ["⇔", "雙線雙向箭頭"], ["➜", "長右箭頭"], ["➤", "箭頭尖端"], ["›", "右尖括號"],
   ]],
   ["幾何圖形", [
     ["●", "實心圓"], ["○", "空心圓"], ["■", "實心方形"], ["□", "空心方形"],
     ["▲", "實心三角形"], ["△", "空心三角形"], ["◆", "實心菱形"], ["◇", "空心菱形"],
+    ["▰", "實心平行四邊形"], ["▱", "空心平行四邊形"], ["▬", "實心長方形"], ["▭", "空心長方形"],
+    ["◉", "靶心"], ["◎", "同心圓"], ["◐", "左半圓"], ["◑", "右半圓"],
+    ["▼", "實心倒三角形"], ["▽", "空心倒三角形"],
   ]],
   ["標記", [
     ["✓", "勾選"], ["×", "叉號"], ["!", "驚嘆號"], ["?", "問號"],
     ["★", "實心星形"], ["☆", "空心星形"], ["+", "加號"], ["−", "減號"],
+    ["☐", "未勾選方框"], ["☑", "已勾選方框"], ["☒", "打叉方框"], ["⚠", "警告"],
+    ["ℹ", "資訊"], ["✚", "粗十字"], ["✦", "四角星"], ["♥", "愛心"],
+    ["※", "附註標記"], ["•", "項目圓點"],
+  ]],
+  ["連線與流程", [
+    ["─", "水平線"], ["│", "垂直線"], ["┄", "水平虛線"], ["╱", "斜線"],
+    ["└", "直角轉彎線"], ["┬", "分支線"], ["┼", "交叉線"], ["↳", "轉角箭頭"],
+    ["↪", "彎入箭頭"], ["↱", "轉向箭頭"], ["⇄", "交換箭頭"], ["⤴", "彎向上箭頭"],
+    ["↻", "順時針箭頭"], ["↺", "逆時針箭頭"],
+  ]],
+  ["數學與編號", [
+    ["①", "圈號一"], ["②", "圈號二"], ["③", "圈號三"], ["④", "圈號四"],
+    ["⑤", "圈號五"], ["⑥", "圈號六"], ["=", "等號"], ["≠", "不等於"],
+    ["≈", "約等於"], ["≤", "小於等於"], ["≥", "大於等於"], ["±", "正負號"],
+    ["÷", "除號"], ["∞", "無限"],
   ]],
 ];
 
@@ -2507,7 +2611,7 @@ const start = (() => {
 return function start({ window, document, modules }) {
   const {
     model, createDOM, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter,
-    createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, slideTemplates, createTemplatePicker, createSymbolPicker, createI18n, bindPrint, messages,
+    createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, slideTemplates, createTemplatePicker, createSymbolPicker, createI18n, messages,
   } = modules;
   const dom = createDOM(document);
   const serialize = htmlFormat.capture(document);
@@ -2541,8 +2645,7 @@ return function start({ window, document, modules }) {
   const openDeck = bindOpenDeck({ dom, window, store, model, media, htmlFormat, canvas, view, toast, t });
   const editor = bindEditor({ dom, window, store, model, view, canvas, actions, templatePicker, symbolPicker, toast, t,
     refreshImportedMedia: openDeck.refreshMediaNotice });
-  const printDeck = bindPrint({ document, window, dom, model, slideView, t });
-  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, t, printDeck,
+  const saveDialog = bindSaveDialog({ dom, document, window, store, model, media, exporter, canvas, view, toast, urls, t,
     onAttach: openDeck.refreshMediaNotice });
   const playback = bindPlayback({ dom, document, window, store, model, slideView, canvas, toast, t });
   window.addEventListener("keydown", (event) => {
@@ -3024,6 +3127,71 @@ const slideTemplates = [
 
 const messages = {
   "en": {
+    "圖片比例": "Image proportions",
+    "鎖定原比例": "Keep original proportions",
+    "自由調整寬高": "Adjust width and height independently",
+    "旋轉角度（°）": "Rotation (°)",
+    "拖曳旋轉": "Drag to rotate",
+    "粗左箭頭": "Bold left arrow",
+    "粗上箭頭": "Bold up arrow",
+    "粗右箭頭": "Bold right arrow",
+    "粗下箭頭": "Bold down arrow",
+    "雙線左箭頭": "Double-line left arrow",
+    "雙線右箭頭": "Double-line right arrow",
+    "雙線雙向箭頭": "Double-line two-way arrow",
+    "長右箭頭": "Long right arrow",
+    "箭頭尖端": "Arrowhead",
+    "右尖括號": "Right chevron",
+    "實心平行四邊形": "Filled parallelogram",
+    "空心平行四邊形": "Outline parallelogram",
+    "實心長方形": "Filled rectangle",
+    "空心長方形": "Outline rectangle",
+    "靶心": "Bullseye",
+    "同心圓": "Concentric circles",
+    "左半圓": "Left half-filled circle",
+    "右半圓": "Right half-filled circle",
+    "實心倒三角形": "Filled downward triangle",
+    "空心倒三角形": "Outline downward triangle",
+    "未勾選方框": "Unchecked box",
+    "已勾選方框": "Checked box",
+    "打叉方框": "Crossed-out box",
+    "警告": "Warning",
+    "資訊": "Information",
+    "粗十字": "Bold cross",
+    "四角星": "Four-point star",
+    "愛心": "Heart",
+    "附註標記": "Note mark",
+    "項目圓點": "Bullet point",
+    "連線與流程": "Connectors and flow",
+    "水平線": "Horizontal line",
+    "垂直線": "Vertical line",
+    "水平虛線": "Dashed horizontal line",
+    "斜線": "Diagonal line",
+    "直角轉彎線": "Elbow connector",
+    "分支線": "Branch connector",
+    "交叉線": "Cross connector",
+    "轉角箭頭": "Elbow arrow",
+    "彎入箭頭": "Hook arrow",
+    "轉向箭頭": "Turn arrow",
+    "交換箭頭": "Exchange arrows",
+    "彎向上箭頭": "Curved up arrow",
+    "順時針箭頭": "Clockwise arrow",
+    "逆時針箭頭": "Counterclockwise arrow",
+    "數學與編號": "Math and numbering",
+    "圈號一": "Circled one",
+    "圈號二": "Circled two",
+    "圈號三": "Circled three",
+    "圈號四": "Circled four",
+    "圈號五": "Circled five",
+    "圈號六": "Circled six",
+    "等號": "Equals",
+    "不等於": "Not equal to",
+    "約等於": "Approximately equal",
+    "小於等於": "Less than or equal to",
+    "大於等於": "Greater than or equal to",
+    "正負號": "Plus or minus",
+    "除號": "Division",
+    "無限": "Infinity",
     "1. 準備": "1. Prepare",
     "2. 執行": "2. Do",
     "3. 確認": "3. Verify",
@@ -3049,7 +3217,6 @@ const messages = {
     "全螢幕": "Fullscreen",
     "刪除": "Delete",
     "副標題": "Subtitle",
-    "匯出 PDF": "Export PDF",
     "原影音檔案已就緒。": "Original media is ready.",
     "另存失敗。": "Could not save the file.",
     "另存新檔": "Save as",
@@ -3061,7 +3228,6 @@ const messages = {
     "圖文版面": "Media and text",
     "圖片": "Image",
     "圖片／影音": "Media",
-    "在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。": "Choose “Save as PDF” in the print dialog. Each slide takes one page.",
     "垂直位置 %": "Y position (%)",
     "字級": "Size",
     "字重": "Weight",
@@ -3123,7 +3289,6 @@ const messages = {
     "溫暖留白，聚焦一個問題": "A warm frame for a single question",
     "瀏覽器目前無法進入全螢幕。": "The browser could not enter fullscreen.",
     "無法讀取影音檔案。": "Could not read the media file.",
-    "無法開啟 PDF 列印。": "Could not open the PDF print dialog.",
     "無法開啟 {name}": "Could not open {name}",
     "無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。": "Could not open this file. Choose an .html file saved by HTML Slides.",
     "無襯線 · Arial／黑體": "Sans serif · Arial",
@@ -3238,6 +3403,71 @@ const messages = {
     "請按影片上的播放鍵開始播放。": "Press Play on the video to start it."
   },
   "ja": {
+    "圖片比例": "画像の縦横比",
+    "鎖定原比例": "元の縦横比を固定",
+    "自由調整寬高": "幅と高さを個別に調整",
+    "旋轉角度（°）": "回転角度（°）",
+    "拖曳旋轉": "ドラッグして回転",
+    "粗左箭頭": "太い左矢印",
+    "粗上箭頭": "太い上矢印",
+    "粗右箭頭": "太い右矢印",
+    "粗下箭頭": "太い下矢印",
+    "雙線左箭頭": "二重の左矢印",
+    "雙線右箭頭": "二重の右矢印",
+    "雙線雙向箭頭": "二重の左右矢印",
+    "長右箭頭": "長い右矢印",
+    "箭頭尖端": "矢じり",
+    "右尖括號": "右山括弧",
+    "實心平行四邊形": "黒い平行四辺形",
+    "空心平行四邊形": "白い平行四辺形",
+    "實心長方形": "黒い長方形",
+    "空心長方形": "白い長方形",
+    "靶心": "的の中心",
+    "同心圓": "二重丸",
+    "左半圓": "左半分が黒い円",
+    "右半圓": "右半分が黒い円",
+    "實心倒三角形": "黒い逆三角形",
+    "空心倒三角形": "白い逆三角形",
+    "未勾選方框": "未選択のチェックボックス",
+    "已勾選方框": "選択済みのチェックボックス",
+    "打叉方框": "バツ印のボックス",
+    "警告": "警告",
+    "資訊": "情報",
+    "粗十字": "太い十字",
+    "四角星": "四つ角の星",
+    "愛心": "ハート",
+    "附註標記": "注記記号",
+    "項目圓點": "箇条書きの点",
+    "連線與流程": "接続線とフロー",
+    "水平線": "横線",
+    "垂直線": "縦線",
+    "水平虛線": "横の破線",
+    "斜線": "斜線",
+    "直角轉彎線": "直角の接続線",
+    "分支線": "分岐線",
+    "交叉線": "交差線",
+    "轉角箭頭": "直角の矢印",
+    "彎入箭頭": "折り返し矢印",
+    "轉向箭頭": "曲がる矢印",
+    "交換箭頭": "入れ替え矢印",
+    "彎向上箭頭": "上向きの曲線矢印",
+    "順時針箭頭": "時計回りの矢印",
+    "逆時針箭頭": "反時計回りの矢印",
+    "數學與編號": "数学記号と番号",
+    "圈號一": "丸数字 1",
+    "圈號二": "丸数字 2",
+    "圈號三": "丸数字 3",
+    "圈號四": "丸数字 4",
+    "圈號五": "丸数字 5",
+    "圈號六": "丸数字 6",
+    "等號": "等号",
+    "不等於": "不等号",
+    "約等於": "ほぼ等しい",
+    "小於等於": "以下",
+    "大於等於": "以上",
+    "正負號": "プラスマイナス",
+    "除號": "除算記号",
+    "無限": "無限大",
     "1. 準備": "1. 準備",
     "2. 執行": "2. 実行",
     "3. 確認": "3. 確認",
@@ -3263,7 +3493,6 @@ const messages = {
     "全螢幕": "全画面",
     "刪除": "削除",
     "副標題": "サブタイトル",
-    "匯出 PDF": "PDF に書き出す",
     "原影音檔案已就緒。": "元のメディアを利用できます。",
     "另存失敗。": "保存できませんでした。",
     "另存新檔": "名前を付けて保存",
@@ -3275,7 +3504,6 @@ const messages = {
     "圖文版面": "図版と説明",
     "圖片": "画像",
     "圖片／影音": "画像・音声・動画",
-    "在列印視窗選擇「另存為 PDF」。每張投影片各佔一頁。": "印刷画面で「PDF に保存」を選択してください。スライド 1 枚につき 1 ページです。",
     "垂直位置 %": "Y 位置 (%)",
     "字級": "サイズ",
     "字重": "太さ",
@@ -3337,7 +3565,6 @@ const messages = {
     "溫暖留白，聚焦一個問題": "やわらかな余白で問いを引き立てる",
     "瀏覽器目前無法進入全螢幕。": "全画面表示に切り替えられませんでした。",
     "無法讀取影音檔案。": "メディアを読み込めませんでした。",
-    "無法開啟 PDF 列印。": "PDF の印刷画面を開けませんでした。",
     "無法開啟 {name}": "{name} を開けません",
     "無法開啟此檔案。請選擇 HTML 簡報另存的 .html 檔。": "ファイルを開けませんでした。HTML スライドで保存した .html を選択してください。",
     "無襯線 · Arial／黑體": "ゴシック体 · Arial",
@@ -3453,7 +3680,7 @@ const messages = {
   }
 };
 
-start({ window, document, modules: { model, createDOM, createI18n, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindPrint, bindOpenDeck, bindPlayback, createTemplatePicker, createSymbolPicker, slideTemplates, messages } });
+start({ window, document, modules: { model, createDOM, createI18n, createStore, filenames, createMedia, htmlFormat, makeZip, createExporter, createSlideView, createEditorView, createEditActions, bindCanvas, bindEditor, bindSaveDialog, bindOpenDeck, bindPlayback, createTemplatePicker, createSymbolPicker, slideTemplates, messages } });
 </script>
 </body>
 </html>
