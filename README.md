@@ -4,7 +4,15 @@
 
 這個專案借鑑 TiddlyWiki 的單檔做法，把簡報內容、編輯器和播放器放在同一個 HTML 裡。做好後可以放進隨身碟、傳給同事，或帶到另一台電腦離線播放。收到的人雙擊檔案就能開啟，也可以接著編輯。
 
+👉 **線上體驗與完整包下載**：[https://office.ddmmbb.org/](https://office.ddmmbb.org/)
+
 ## 快速開始
+
+### 方式一：線上直接體驗（或下載完整套件）
+
+前往 **[HTML Office 網站](https://office.ddmmbb.org/)**，可以直接在瀏覽器中線上試用 HTML Slidebook，或一次下載包含五款工具的完整離線包（`html-office.zip`）。
+
+### 方式二：從本專案單檔下載
 
 1. 下載 `HTML-Slides.html`。如果拿到的是可攜版 ZIP，先解壓縮，再雙擊裡面的 HTML。
 2. 點左側的「投影片範本」新增一頁。雙擊文字開始修改，也可以拖曳物件、調整大小或插入圖片、影片和音訊。
@@ -48,6 +56,16 @@
 - **資料欄位有固定契約。** `AGENTS.md` 說明投影片、物件、影音引用和座標的格式，讓 LLM 能沿用既有欄位，也知道該保留哪些舊檔相容行為。
 - **可用測試回查修改。** 內建測試涵蓋編輯、播放、匯出和舊檔相容等流程。請 LLM 驗證這次改動，也順手檢查相關功能。
 - **分檔維護，單檔交付。** 原始碼拆開方便修改，交付時組成一個 HTML。使用者雙擊檔案即可離線編輯和播放。
+
+## HTML Office 系列專案
+
+HTML Office 將以下五個開源專案集結成單一資料夾，可於 [https://office.ddmmbb.org/](https://office.ddmmbb.org/) 線上體驗或一次下載離線使用：
+
+- **[html-slidebook](https://github.com/ddmmbb-2/html-slidebook)**（本專案）— 簡報編輯器
+- **[html-writer](https://github.com/ddmmbb-2/html-writer)** — 文件編輯器
+- **[html-image](https://github.com/ddmmbb-2/html-image)** — 圖片編輯器
+- **[html-excel](https://github.com/ddmmbb-2/html-excel)** — 試算表編輯器
+- **[html-keep](https://github.com/ddmmbb-2/html-keep)** — 口袋筆記 / 備忘錄
 
 ## 關於開發
 
