@@ -681,6 +681,12 @@ kbd { font: 11px ui-monospace, monospace; opacity: .8; margin-left: 2px; }
 <script>
 "use strict";
 
+/*
+ * 維護原則：優先讓 LLM 容易定位、修改和驗證功能。
+ * 單檔 HTML 內以 `// 名稱.mjs` 標記模組，維持清楚的模組邊界、資料結構及介面。
+ * 同一項行為由單一入口處理，例如滑鼠、按鈕和鍵盤共用 playback.mjs 的 next()。
+ */
+
 // model.mjs
 const model = (() => {
 const WIDTH = 1280;
@@ -2680,6 +2686,11 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
 
   on("show", "pointermove", revealAtBottom);
   on("show", "pointerdown", revealAtBottom);
+  on("show", "click", (event) => {
+    if (event.button !== 0 || event.defaultPrevented) return;
+    if (event.target.closest("#showBar, video, audio")) return;
+    next();
+  });
   on("showBar", "focusin", showControls);
   on("play", "click", () => start(store.index()));
   on("prevShow", "click", () => advance(index - 1));
