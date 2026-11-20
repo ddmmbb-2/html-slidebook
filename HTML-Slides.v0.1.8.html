@@ -2737,8 +2737,10 @@ function bindLaserPointer(frame, dot, move, leave) {
 }
 
 // presenter-window.mjs
-function openPresenter({ window, document, slideView, t, previous, next, stop, keydown, move, leave, onClose }) {
-  const popup = window.open("", "_blank", "popup,width=800,height=630,resizable=yes");
+function openPresenter({ window, document, slideView, t, screen, previous, next, stop, keydown, move, leave, onClose }) {
+  const features = ["popup", "width=800", "height=630", "resizable=yes"];
+  if (screen) features.push("left=" + screen.availLeft, "top=" + screen.availTop);
+  const popup = window.open("", "_blank", features.join(","));
   if (!popup || popup.closed) return null;
 
   const view = popup.document;
@@ -2809,11 +2811,10 @@ function openPresenter({ window, document, slideView, t, previous, next, stop, k
     syncVideos(audienceVideos);
   }
 
-  function syncNavigation(position, hasPrevious, hasNext, nextLabel) {
+  function syncNavigation(position, hasPrevious, nextLabel) {
     if (popup.closed) return dispose();
     id("Position").textContent = position;
     id("Prev").disabled = !hasPrevious;
-    id("Next").disabled = !hasNext;
     id("Next").textContent = nextLabel;
   }
 
@@ -2837,7 +2838,6 @@ function openPresenter({ window, document, slideView, t, previous, next, stop, k
 
   return {
     draw, drawPointer, syncNavigation,
-    focus: () => popup.focus(),
     close() {
       dispose();
       if (!popup.closed) popup.close();
@@ -2862,6 +2862,8 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
   let presenter = null;
   let pointerSource = null;
   let trigger = "play";
+  let startingDual = false;
+  let wasFullscreen = false;
   const active = () => !show.hidden;
 
   function movePointer(source, point) {
@@ -2903,16 +2905,15 @@ return function bindPlayback({ dom, document, window, store, model, slideView, c
   const pendingVideo = () => Array.from(videos()).find((video) =>
     video.dataset.videoStart === "next" && !started.has(video));
 
-function syncNextButton() {
+  function syncNextButton() {
     const pending = Boolean(pendingVideo());
-    const isLast = !pending && index >= store.deck.slides.length - 1;
     const next = id("nextShow");
-    next.disabled = false;
-    const label = t(pending ? "播放影片" : isLast ? "結束播放" : "下一頁");
+    const last = index === store.deck.slides.length - 1;
+    const label = t(pending ? "播放影片" : last ? "結束播放" : "下一頁");
     next.setAttribute("aria-label", label);
     next.title = label;
-    next.textContent = pending ? "▶" : "→";
-    presenter?.syncNavigation(id("showPosition").textContent, index > 0, true, label);
+    next.textContent = pending ? "▶" : last ? "■" : "→";
+    presenter?.syncNavigation(id("showPosition").textContent, index > 0, label);
   }
 
   function stopVideos() {
@@ -2950,45 +2951,90 @@ function syncNextButton() {
     fit();
   }
 
-function start(from, dual = false) {
-    if (dual) {
-      presenter = openPresenter({ window, document, slideView, t,
-        previous: () => advance(index - 1), next, stop,
-        keydown: (event) => {
-          if (!event.defaultPrevented && !event.isComposing) keydown(event, true);
-        },
-        move: (point) => movePointer("presenter", point),
-        leave: () => leavePointer("presenter"),
-        onClose: () => {
-          presenter = null;
-          leavePointer("presenter");
-        },
-      });
+  function createPresenter(screen) {
+    return openPresenter({ window, document, slideView, t, screen,
+      previous: () => advance(index - 1), next, stop,
+      keydown: (event) => {
+        if (active() && !event.defaultPrevented && !event.isComposing) keydown(event, true);
+      },
+      move: (point) => movePointer("presenter", point),
+      leave: () => leavePointer("presenter"),
+      onClose: () => {
+        presenter = null;
+        leavePointer("presenter");
+      },
+    });
+  }
+
+  async function enterFullscreen(screen) {
+    if (show.matches(":fullscreen")) return;
+    try {
+      await show.requestFullscreen(screen ? { screen } : undefined);
+    } catch {
+      if (active()) {
+        showControls();
+        toast(t("瀏覽器目前無法進入全螢幕。"));
+      }
+    }
+  }
+
+  async function startDual() {
+    if (active() || startingDual) return;
+    startingDual = true;
+    try {
+      let screens;
+      if (document.fullscreenEnabled && window.screen.isExtended && window.getScreenDetails) {
+        screens = await window.getScreenDetails().catch(() => null);
+      }
+      if (active()) return;
+
+      const audienceScreen = screens?.currentScreen;
+      const notesScreen = screens?.screens.find((screen) => screen !== audienceScreen);
+      const companion = Boolean(audienceScreen && notesScreen);
+      if (companion) {
+        // 指定觀眾螢幕後，需在同一次操作中開啟另一台螢幕上的講者視窗。
+        begin(store.index(), "playDual");
+        void enterFullscreen(audienceScreen);
+      }
+      presenter = createPresenter(notesScreen);
       if (!presenter) {
+        if (companion) stop();
         toast(t("無法開啟講者視窗。請允許彈出式視窗後再試一次。"));
         return;
       }
+      if (!companion) begin(store.index(), "playDual");
+      draw();
+      if (!companion) void enterFullscreen();
+    } finally {
+      startingDual = false;
     }
-    trigger = dual ? "playDual" : "play";
+  }
+
+  function start(from) {
+    if (active()) return;
+    begin(from, "play");
+    void enterFullscreen();
+    draw();
+  }
+
+  function begin(from, button) {
+    trigger = button;
     canvas.closeInline(true);
     store.finishGroup();
     index = from;
     id("workspace").inert = true;
     document.querySelector(".app-header").inert = true;
     show.hidden = false;
-    draw();
     show.focus({ preventScroll: true });
     showControls();
-    if (!document.fullscreenElement && show.requestFullscreen) {
-      show.requestFullscreen().catch(() => {});
-    }
-    presenter?.focus();
   }
 
   function stop() {
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if (!active()) return;
     hideControls();
     show.hidden = true;
+    wasFullscreen = false;
+    if (show.contains(document.fullscreenElement)) document.exitFullscreen().catch(() => {});
     movePointer(null, null);
     presenter?.close();
     stopVideos();
@@ -3006,20 +3052,18 @@ function start(from, dual = false) {
     showControls();
   }
 
-function next() {
+  function next() {
+    if (!active()) return;
     const video = pendingVideo();
-    if (!video) {
-      if (index >= store.deck.slides.length - 1) {
-        stop();
-        return;
-      }
-      advance(index + 1);
+    if (video) {
+      started.add(video);
+      playVideo(video);
+      syncNextButton();
+      showControls();
       return;
     }
-    started.add(video);
-    playVideo(video);
-    syncNextButton();
-    showControls();
+    if (index + 1 === store.deck.slides.length) stop();
+    else advance(index + 1);
   }
 
   on("show", "pointermove", revealAtBottom);
@@ -3031,24 +3075,26 @@ function next() {
   });
   on("showBar", "focusin", showControls);
   on("play", "click", () => start(store.index()));
-  on("playDual", "click", () => start(store.index(), true));
+  on("playDual", "click", startDual);
   on("prevShow", "click", () => advance(index - 1));
   on("nextShow", "click", next);
   on("exitShow", "click", stop);
-  on("fullscreen", "click", async () => {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await show.requestFullscreen();
-    } catch {
-      toast(t("瀏覽器目前無法進入全螢幕。"));
-    }
+  on("fullscreen", "click", () => {
+    if (show.matches(":fullscreen")) stop();
+    else void enterFullscreen();
   });
-document.addEventListener("fullscreenchange", () => {
-    id("fullscreen").textContent = document.fullscreenElement ? t("退出全螢幕") : t("全螢幕");
-    if (!document.fullscreenElement && active()) {
+  document.addEventListener("fullscreenchange", () => {
+    const fullscreen = show.matches(":fullscreen");
+    id("fullscreen").textContent = t(fullscreen ? "退出全螢幕" : "全螢幕");
+    if (!active()) {
+      if (fullscreen) document.exitFullscreen().catch(() => {});
+      return;
+    }
+    if (wasFullscreen && !fullscreen) {
       stop();
       return;
     }
+    wasFullscreen = fullscreen;
     fit();
     showControls();
   });
